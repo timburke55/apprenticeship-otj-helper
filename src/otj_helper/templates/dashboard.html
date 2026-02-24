@@ -30,8 +30,8 @@
     <div class="space-y-3">
         {% for type_name, hours in hours_by_type|sort(attribute='1', reverse=True) %}
         <div class="flex items-center">
-            <span class="w-48 text-sm text-gray-600">{{ type_name }}</span>
-            <div class="flex-1 mx-4">
+            <span class="w-32 sm:w-48 text-sm text-gray-600 truncate">{{ type_name }}</span>
+            <div class="flex-1 mx-2 sm:mx-4">
                 <div class="bg-gray-200 rounded-full h-4">
                     <div class="bg-indigo-600 rounded-full h-4" style="width: {{ (hours / total_hours * 100) if total_hours else 0 }}%"></div>
                 </div>

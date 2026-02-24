@@ -26,15 +26,35 @@
                 <div class="flex h-16 items-center justify-between">
                     <div class="flex items-center">
                         <a href="/" class="text-white font-bold text-lg">OTJ Tracker</a>
-                        <div class="ml-10 flex items-baseline space-x-4">
+                        <!-- Desktop nav links (hidden on mobile) -->
+                        <div class="ml-10 hidden sm:flex items-baseline space-x-4">
                             <a href="/" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
                             <a href="/activities" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Activities</a>
                             <a href="/ksbs" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">KSBs</a>
                         </div>
                     </div>
-                    <div>
-                        <a href="/activities/new" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
+                    <div class="flex items-center gap-2">
+                        <!-- Desktop CTA (hidden on mobile) -->
+                        <a href="/activities/new" class="hidden sm:inline-block rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
+                        <!-- Hamburger button (visible on mobile only) -->
+                        <button type="button" id="mobile-menu-btn"
+                            class="sm:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white"
+                            aria-label="Open menu"
+                            onclick="var m=document.getElementById('mobile-menu');m.classList.toggle('hidden');this.setAttribute('aria-expanded',!m.classList.contains('hidden'))">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                            </svg>
+                        </button>
                     </div>
+                </div>
+            </div>
+            <!-- Mobile menu panel (hidden by default) -->
+            <div id="mobile-menu" class="hidden sm:hidden border-t border-gray-700">
+                <div class="space-y-1 px-2 pb-3 pt-2">
+                    <a href="/" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
+                    <a href="/activities" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Activities</a>
+                    <a href="/ksbs" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">KSBs</a>
+                    <a href="/activities/new" class="block rounded-md bg-indigo-600 px-3 py-2 text-base font-semibold text-white hover:bg-indigo-500">+ Log Activity</a>
                 </div>
             </div>
         </nav>
