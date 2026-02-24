@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ activity.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="sm:flex sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ activity.title }}</h1>
+            <p class="mt-1 text-sm text-gray-500">
+                {{ activity.activity_date.strftime('%d %B %Y') }}
+                &middot; {{ "%.1f"|format(activity.duration_hours) }} hours
+                &middot; {{ dict(activity.ACTIVITY_TYPES).get(activity.activity_type, activity.activity_type) }}
+            </p>
+        </div>
+        <div class="mt-3 sm:mt-0 flex gap-2">
+            <a href="/activities/{{ activity.id }}/edit"
+                class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Edit
+            </a>
+            <form method="post" action="/activities/{{ activity.id }}/delete" class="inline"
+                onsubmit="return confirm('Delete this activity?')">
+                <button type="submit"
+                    class="rounded-md bg-white px-3 py-2 text-sm font-medium text-red-600 shadow-sm ring-1 ring-inset ring-red-200 hover:bg-red-50">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if activity.description %}
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 mb-2">Description</h2>
+    <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ activity.description }}</p>
+</div>
+{% endif %}
+
+{% if activity.ksbs %}
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 mb-3">KSBs Covered</h2>
+    <div class="space-y-2">
+        {% for ksb in activity.ksbs|sort(attribute='code') %}
+        <a href="/ksbs/{{ ksb.code }}" class="block p-2 rounded-md hover:bg-gray-50">
+            <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium mr-2
+                {% if ksb.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
+                {% elif ksb.category == 'skill' %}bg-skill-light text-skill-dark
+                {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
+                {{ ksb.code }}
+            </span>
+            <span class="text-sm text-gray-900">{{ ksb.title }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if activity.resources %}
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 mb-3">Resource Links</h2>
+    <div class="divide-y divide-gray-100">
+        {% for resource in activity.resources %}
+        <div class="py-2 flex items-center justify-between">
+            <div>
+                <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"
+                    class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                    {{ resource.title }}
+                </a>
+                {% if resource.description %}
+                <p class="text-xs text-gray-500">{{ resource.description }}</p>
+                {% endif %}
+            </div>
+            <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">
+                {{ dict(resource.SOURCE_TYPES).get(resource.source_type, resource.source_type) }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if activity.notes %}
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 mb-2">Notes</h2>
+    <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ activity.notes }}</p>
+</div>
+{% endif %}
+
+<div class="text-sm text-gray-400">
+    Created {{ activity.created_at.strftime('%d %b %Y %H:%M') }}
+    {% if activity.updated_at and activity.updated_at != activity.created_at %}
+    &middot; Updated {{ activity.updated_at.strftime('%d %b %Y %H:%M') }}
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}KSBs{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Knowledge, Skills & Behaviours</h1>
+    <p class="mt-1 text-sm text-gray-500">Systems Thinking Practitioner L7 (ST0787)</p>
+</div>
+
+{% macro ksb_table(items, color_class) %}
+<div class="bg-white shadow rounded-lg overflow-hidden mb-6">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Code</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Activities</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Hours</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for ksb, count, hours in items %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3">
+                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-{{ color_class }}-light text-{{ color_class }}-dark">
+                        {{ ksb.code }}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    <a href="/ksbs/{{ ksb.code }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ ksb.title }}</a>
+                </td>
+                <td class="px-4 py-3 text-right text-sm {% if count > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ count }}</td>
+                <td class="px-4 py-3 text-right text-sm font-medium {% if hours > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ "%.1f"|format(hours) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endmacro %}
+
+<h2 class="text-lg font-semibold text-knowledge-dark mb-3">Knowledge (K1-K5)</h2>
+{{ ksb_table(knowledge, 'knowledge') }}
+
+<h2 class="text-lg font-semibold text-skill-dark mb-3">Skills (S1-S11)</h2>
+{{ ksb_table(skills, 'skill') }}
+
+<h2 class="text-lg font-semibold text-behaviour-dark mb-3">Behaviours (B1-B6)</h2>
+{{ ksb_table(behaviours, 'behaviour') }}
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if activity else 'New' }} Activity{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">{{ 'Edit' if activity else 'Log New' }} Activity</h1>
+</div>
+
+<form method="post" class="space-y-6">
+    <div class="bg-white shadow rounded-lg p-6 space-y-4">
+        <h2 class="text-lg font-medium text-gray-900">Activity Details</h2>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                <input type="text" name="title" id="title" required
+                    value="{{ activity.title if activity else '' }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g. SSM workshop on organisational boundary analysis">
+            </div>
+
+            <div>
+                <label for="activity_date" class="block text-sm font-medium text-gray-700">Date</label>
+                <input type="date" name="activity_date" id="activity_date" required
+                    value="{{ activity.activity_date.isoformat() if activity else '' }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </div>
+
+            <div>
+                <label for="duration_hours" class="block text-sm font-medium text-gray-700">Duration (hours)</label>
+                <input type="number" name="duration_hours" id="duration_hours" required step="0.25" min="0.25"
+                    value="{{ activity.duration_hours if activity else '' }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g. 2.5">
+            </div>
+
+            <div>
+                <label for="activity_type" class="block text-sm font-medium text-gray-700">Activity Type</label>
+                <select name="activity_type" id="activity_type"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    {% for value, label in activity_types %}
+                    <option value="{{ value }}" {% if activity and activity.activity_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="sm:col-span-2">
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" id="description" rows="3"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="What did you learn or do?">{{ activity.description if activity else '' }}</textarea>
+            </div>
+
+            <div class="sm:col-span-2">
+                <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea name="notes" id="notes" rows="2"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Any additional notes or reflections">{{ activity.notes if activity else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- KSB selection -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">KSBs Covered</h2>
+        <p class="text-sm text-gray-500 mb-4">Select which Knowledge, Skills or Behaviours this activity relates to.</p>
+
+        {% set selected_codes = activity.ksbs|map(attribute='code')|list if activity else [] %}
+
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'knowledge' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-knowledge-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-knowledge focus:ring-knowledge">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-skill-dark mb-2">Skills</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'skill' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-skill-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-skill focus:ring-skill">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-behaviour-dark mb-2">Behaviours</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'behaviour' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-behaviour-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-behaviour focus:ring-behaviour">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource links -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Resource Links</h2>
+        <p class="text-sm text-gray-500 mb-4">Link to evidence in Google Drive, GitHub, or other sources.</p>
+
+        <div id="resource-links" class="space-y-4">
+            {% if activity and activity.resources %}
+                {% for resource in activity.resources %}
+                <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 rounded-md">
+                    <div class="sm:col-span-3">
+                        <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Link title"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div class="sm:col-span-5">
+                        <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <select name="link_source_type"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            {% for value, label in source_types %}
+                            <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2 flex items-center">
+                        <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <button type="button" onclick="addResourceRow()"
+            class="mt-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            + Add Link
+        </button>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex justify-end gap-3">
+        <a href="{{ url_for('activities.detail', activity_id=activity.id) if activity else url_for('activities.list_activities') }}"
+            class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            Cancel
+        </a>
+        <button type="submit"
+            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+            {{ 'Update' if activity else 'Save' }} Activity
+        </button>
+    </div>
+</form>
+
+<script>
+function addResourceRow() {
+    const container = document.getElementById('resource-links');
+    const row = document.createElement('div');
+    row.className = 'resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 rounded-md';
+    row.innerHTML = `
+        <div class="sm:col-span-3">
+            <input type="text" name="link_title" placeholder="Link title"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <div class="sm:col-span-5">
+            <input type="url" name="link_url" placeholder="https://..."
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        </div>
+        <div class="sm:col-span-2">
+            <select name="link_source_type"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="google_drive">Google Drive</option>
+                <option value="github">GitHub</option>
+                <option value="website">Website</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="sm:col-span-2 flex items-center gap-1">
+            <input type="text" name="link_description" placeholder="Note"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <button type="button" onclick="this.closest('.resource-row').remove()"
+                class="text-gray-400 hover:text-red-500 text-lg">&times;</button>
+        </div>
+    `;
+    container.appendChild(row);
+}
+</script>
+{% endblock %}

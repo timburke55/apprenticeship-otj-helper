@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">OTJ Training Dashboard</h1>
+    <p class="mt-1 text-sm text-gray-500">Systems Thinking Practitioner L7 - Off-the-Job Training Tracker</p>
+</div>
+
+<!-- Summary cards -->
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500">Total OTJ Hours</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ "%.1f"|format(total_hours) }}</dd>
+    </div>
+    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500">Activities Logged</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ activity_count }}</dd>
+    </div>
+    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500">KSBs Covered</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ ksb_coverage|selectattr('4', 'greaterthan', 0)|list|length }} / {{ ksb_coverage|length }}</dd>
+    </div>
+</div>
+
+<!-- Hours by type -->
+{% if hours_by_type %}
+<div class="bg-white shadow rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Hours by Activity Type</h2>
+    <div class="space-y-3">
+        {% for type_name, hours in hours_by_type|sort(attribute='1', reverse=True) %}
+        <div class="flex items-center">
+            <span class="w-48 text-sm text-gray-600">{{ type_name }}</span>
+            <div class="flex-1 mx-4">
+                <div class="bg-gray-200 rounded-full h-4">
+                    <div class="bg-indigo-600 rounded-full h-4" style="width: {{ (hours / total_hours * 100) if total_hours else 0 }}%"></div>
+                </div>
+            </div>
+            <span class="text-sm font-medium text-gray-900 w-16 text-right">{{ "%.1f"|format(hours) }}h</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- KSB Coverage heatmap -->
+<div class="bg-white shadow rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">KSB Coverage</h2>
+    <div class="space-y-4">
+        <div>
+            <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for code, category, title, count, hours in ksb_coverage if category == 'knowledge' %}
+                <a href="/ksbs/{{ code }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
+                    {% if count > 0 %}bg-knowledge-light text-knowledge-dark{% else %}bg-gray-100 text-gray-400{% endif %}
+                    hover:ring-2 hover:ring-knowledge">
+                    {{ code }}
+                    {% if count > 0 %}<span class="ml-1.5 text-xs">({{ "%.1f"|format(hours) }}h)</span>{% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            <h3 class="text-sm font-semibold text-skill-dark mb-2">Skills</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for code, category, title, count, hours in ksb_coverage if category == 'skill' %}
+                <a href="/ksbs/{{ code }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
+                    {% if count > 0 %}bg-skill-light text-skill-dark{% else %}bg-gray-100 text-gray-400{% endif %}
+                    hover:ring-2 hover:ring-skill">
+                    {{ code }}
+                    {% if count > 0 %}<span class="ml-1.5 text-xs">({{ "%.1f"|format(hours) }}h)</span>{% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            <h3 class="text-sm font-semibold text-behaviour-dark mb-2">Behaviours</h3>
+            <div class="flex flex-wrap gap-2">
+                {% for code, category, title, count, hours in ksb_coverage if category == 'behaviour' %}
+                <a href="/ksbs/{{ code }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
+                    {% if count > 0 %}bg-behaviour-light text-behaviour-dark{% else %}bg-gray-100 text-gray-400{% endif %}
+                    hover:ring-2 hover:ring-behaviour">
+                    {{ code }}
+                    {% if count > 0 %}<span class="ml-1.5 text-xs">({{ "%.1f"|format(hours) }}h)</span>{% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent activities -->
+<div class="bg-white shadow rounded-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-medium text-gray-900">Recent Activities</h2>
+        <a href="/activities" class="text-sm text-indigo-600 hover:text-indigo-500">View all</a>
+    </div>
+    {% if recent %}
+    <div class="divide-y divide-gray-100">
+        {% for activity in recent %}
+        <div class="py-3">
+            <div class="flex justify-between items-start">
+                <div>
+                    <a href="/activities/{{ activity.id }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ activity.title }}</a>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ activity.activity_date.strftime('%d %b %Y') }} &middot; {{ "%.1f"|format(activity.duration_hours) }}h</p>
+                </div>
+                <div class="flex gap-1">
+                    {% for ksb in activity.ksbs %}
+                    <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium
+                        {% if ksb.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
+                        {% elif ksb.category == 'skill' %}bg-skill-light text-skill-dark
+                        {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
+                        {{ ksb.code }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-500 py-4 text-center">No activities logged yet. <a href="/activities/new" class="text-indigo-600 hover:text-indigo-500">Log your first activity</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}

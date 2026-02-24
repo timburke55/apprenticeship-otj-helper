@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ ksb.code }}: {{ ksb.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center gap-3">
+        <span class="inline-flex items-center rounded-md px-3 py-1 text-sm font-medium
+            {% if ksb.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
+            {% elif ksb.category == 'skill' %}bg-skill-light text-skill-dark
+            {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
+            {{ ksb.code }}
+        </span>
+        <h1 class="text-2xl font-bold text-gray-900">{{ ksb.title }}</h1>
+    </div>
+    <p class="mt-1 text-sm text-gray-500 capitalize">{{ ksb.category }}</p>
+</div>
+
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 mb-2">Standard Description</h2>
+    <p class="text-sm text-gray-900">{{ ksb.description }}</p>
+</div>
+
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 mb-6">
+    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500">Total Hours</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ "%.1f"|format(total_hours) }}</dd>
+    </div>
+    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500">Activities</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ activities|length }}</dd>
+    </div>
+</div>
+
+{% if activities %}
+<div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="px-4 py-3 border-b border-gray-200">
+        <h2 class="text-sm font-medium text-gray-900">Related Activities</h2>
+    </div>
+    <div class="divide-y divide-gray-100">
+        {% for activity in activities %}
+        <div class="px-4 py-3 hover:bg-gray-50">
+            <div class="flex justify-between items-start">
+                <div>
+                    <a href="/activities/{{ activity.id }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ activity.title }}</a>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ activity.activity_date.strftime('%d %b %Y') }} &middot; {{ "%.1f"|format(activity.duration_hours) }}h &middot; {{ dict(activity.ACTIVITY_TYPES).get(activity.activity_type, activity.activity_type) }}</p>
+                </div>
+                <div class="flex gap-1">
+                    {% for k in activity.ksbs|sort(attribute='code') %}
+                    <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium
+                        {% if k.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
+                        {% elif k.category == 'skill' %}bg-skill-light text-skill-dark
+                        {% else %}bg-behaviour-light text-behaviour-dark{% endif %}
+                        {% if k.code == ksb.code %}ring-2 ring-offset-1 {% if ksb.category == 'knowledge' %}ring-knowledge{% elif ksb.category == 'skill' %}ring-skill{% else %}ring-behaviour{% endif %}{% endif %}">
+                        {{ k.code }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="text-center py-12 bg-white shadow rounded-lg">
+    <p class="text-sm text-gray-500">No activities logged against this KSB yet.</p>
+    <a href="/activities/new" class="mt-2 inline-block text-sm text-indigo-600 hover:text-indigo-500">Log an activity</a>
+</div>
+{% endif %}
+
+<div class="mt-6">
+    <a href="/ksbs" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to all KSBs</a>
+</div>
+{% endblock %}

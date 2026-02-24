@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Activities{% endblock %}
+
+{% block content %}
+<div class="sm:flex sm:items-center sm:justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Activities</h1>
+    <a href="/activities/new" class="mt-3 sm:mt-0 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
+</div>
+
+<!-- Filters -->
+<div class="bg-white shadow rounded-lg p-4 mb-6">
+    <form method="get" class="flex flex-wrap gap-4 items-end">
+        <div>
+            <label for="ksb" class="block text-xs font-medium text-gray-700">KSB</label>
+            <select name="ksb" id="ksb" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">All KSBs</option>
+                {% for ksb in all_ksbs %}
+                <option value="{{ ksb.code }}" {% if ksb_filter == ksb.code %}selected{% endif %}>{{ ksb.code }}: {{ ksb.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="type" class="block text-xs font-medium text-gray-700">Type</label>
+            <select name="type" id="type" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">All Types</option>
+                {% for value, label in activity_types %}
+                <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">Filter</button>
+        {% if ksb_filter or type_filter %}
+        <a href="/activities" class="text-sm text-gray-500 hover:text-gray-700">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if activities.items %}
+<div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activity</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">KSBs</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Links</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for activity in activities.items %}
+            <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{{ activity.activity_date.strftime('%d %b %Y') }}</td>
+                <td class="px-4 py-3">
+                    <a href="/activities/{{ activity.id }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ activity.title }}</a>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-500">{{ dict(activity.ACTIVITY_TYPES).get(activity.activity_type, activity.activity_type) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ "%.1f"|format(activity.duration_hours) }}</td>
+                <td class="px-4 py-3">
+                    <div class="flex flex-wrap gap-1">
+                        {% for ksb in activity.ksbs %}
+                        <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium
+                            {% if ksb.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
+                            {% elif ksb.category == 'skill' %}bg-skill-light text-skill-dark
+                            {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
+                            {{ ksb.code }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-500">
+                    {% if activity.resources %}
+                    <span class="text-xs">{{ activity.resources|length }} link{{ 's' if activity.resources|length > 1 }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if activities.pages > 1 %}
+<div class="flex justify-center mt-6 gap-2">
+    {% if activities.has_prev %}
+    <a href="?page={{ activities.prev_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">Previous</a>
+    {% endif %}
+    <span class="rounded-md bg-white px-3 py-2 text-sm text-gray-500">Page {{ activities.page }} of {{ activities.pages }}</span>
+    {% if activities.has_next %}
+    <a href="?page={{ activities.next_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="text-center py-12">
+    <p class="text-sm text-gray-500">No activities found.</p>
+    <a href="/activities/new" class="mt-2 inline-block text-sm text-indigo-600 hover:text-indigo-500">Log your first activity</a>
+</div>
+{% endif %}
+{% endblock %}
