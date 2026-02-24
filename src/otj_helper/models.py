@@ -7,6 +7,20 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 
+class User(db.Model):
+    """An authenticated user of the application."""
+
+    __tablename__ = "app_user"
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(255))
+    google_sub = db.Column(db.String(255), unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    activities = db.relationship("Activity", backref="user", lazy="select")
+
+
 # Many-to-many association table
 activity_ksbs = db.Table(
     "activity_ksbs",
@@ -28,6 +42,7 @@ class Activity(db.Model):
     """A single off-the-job training activity."""
 
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("app_user.id"), nullable=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, default="")
     activity_date = db.Column(db.Date, nullable=False, default=date.today)
