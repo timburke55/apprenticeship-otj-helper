@@ -15,11 +15,11 @@ It lets you log training activities, track hours, and map your work to the Knowl
 ## Tech stack
 
 - **Python 3.11+** / **Flask 3.0+**
-- **Flask-SQLAlchemy** with **SQLite**
+- **Flask-SQLAlchemy** with **SQLite** (local) / **PostgreSQL** (production)
 - **Tailwind CSS** (CDN)
 - **UV** for dependency management
 
-## Getting started
+## Getting started (local)
 
 ```bash
 # Install dependencies
@@ -31,14 +31,73 @@ uv run otj-helper
 
 Then open [http://localhost:5000](http://localhost:5000).
 
-The SQLite database is created automatically at `data/otj.db` on first run, and KSB reference data is seeded automatically.
+The SQLite database is created automatically at `data/otj.db` on first run, and KSB reference data is seeded automatically. Auth is skipped locally unless you configure Google OAuth credentials.
 
-## Configuration
+## Deploying to Railway
+
+### 1. Create a Google OAuth app
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com) → **APIs & Services** → **Credentials**
+2. Click **Create Credentials** → **OAuth 2.0 Client ID**, choose **Web application**
+3. Under **Authorised redirect URIs**, add:
+   ```
+   https://<your-app>.railway.app/auth/callback
+   ```
+   (You can come back and add this once Railway gives you a domain)
+4. Copy the **Client ID** and **Client Secret**
+
+### 2. Create a Railway project
+
+1. Go to [railway.app](https://railway.app) and create a new project
+2. Connect your GitHub repo and select this repository
+3. Railway will detect the `Procfile` and deploy automatically
+
+### 3. Add a PostgreSQL database
+
+In your Railway project, click **+ New** → **Database** → **PostgreSQL**.
+Railway sets `DATABASE_URL` in your app's environment automatically — no further config needed.
+
+### 4. Set environment variables
+
+In Railway, go to your service → **Variables** and add:
+
+| Variable | Value |
+|---|---|
+| `SECRET_KEY` | A long random string (e.g. `openssl rand -hex 32`) |
+| `GOOGLE_CLIENT_ID` | From step 1 |
+| `GOOGLE_CLIENT_SECRET` | From step 1 |
+| `ALLOWED_EMAILS` | Comma-separated list of permitted Google account emails |
+
+**`ALLOWED_EMAILS` example:**
+```
+you@gmail.com,colleague@work.com,friend@example.com
+```
+
+If `ALLOWED_EMAILS` is not set, any Google account can sign in. Set it before going live.
+
+### 5. Update the OAuth redirect URI
+
+Once Railway assigns your app a domain, go back to Google Cloud Console and confirm the redirect URI matches exactly:
+```
+https://<your-app>.railway.app/auth/callback
+```
+
+### Adding or removing users
+
+Edit the `ALLOWED_EMAILS` variable in Railway's dashboard. Changes take effect immediately on the next sign-in attempt — no redeploy needed.
+
+---
+
+## Local configuration
 
 | Environment variable | Default | Description |
 |---|---|---|
-| `OTJ_DB_PATH` | `data/otj.db` | Path to the SQLite database file |
+| `OTJ_DB_PATH` | `data/otj.db` | Path to the SQLite database file (local only) |
 | `SECRET_KEY` | `dev-key-change-in-production` | Flask session secret key |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | — | Google OAuth client secret |
+| `ALLOWED_EMAILS` | — | Comma-separated allowlist (unset = allow all) |
+| `DATABASE_URL` | — | PostgreSQL URL (overrides SQLite when set) |
 
 ## Activity types
 
