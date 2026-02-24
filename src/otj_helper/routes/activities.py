@@ -6,6 +6,14 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from otj_helper.models import Activity, KSB, ResourceLink, db
 
+# Which source types are surfaced per CORE stage (first entry is the default)
+_STAGE_SOURCE_TYPES = {
+    "capture": ["google_keep", "website", "other"],
+    "organise": ["google_tasks", "website", "other"],
+    "review": ["google_docs", "diagram", "markdown", "google_drive", "other"],
+    "engage": ["google_docs", "google_drive", "github", "diagram", "markdown", "website", "other"],
+}
+
 bp = Blueprint("activities", __name__, url_prefix="/activities")
 
 
@@ -49,6 +57,8 @@ def create():
         all_ksbs=all_ksbs,
         activity_types=Activity.ACTIVITY_TYPES,
         source_types=ResourceLink.SOURCE_TYPES,
+        workflow_stages=ResourceLink.WORKFLOW_STAGES,
+        stage_source_types=_STAGE_SOURCE_TYPES,
     )
 
 
@@ -72,6 +82,8 @@ def edit(activity_id):
         all_ksbs=all_ksbs,
         activity_types=Activity.ACTIVITY_TYPES,
         source_types=ResourceLink.SOURCE_TYPES,
+        workflow_stages=ResourceLink.WORKFLOW_STAGES,
+        stage_source_types=_STAGE_SOURCE_TYPES,
     )
 
 
@@ -107,6 +119,7 @@ def _save_activity(activity):
     link_urls = request.form.getlist("link_url")
     link_types = request.form.getlist("link_source_type")
     link_descriptions = request.form.getlist("link_description")
+    link_stages = request.form.getlist("link_stage")
 
     for i in range(len(link_urls)):
         url = link_urls[i].strip()
@@ -117,6 +130,7 @@ def _save_activity(activity):
             title=link_titles[i].strip() if i < len(link_titles) else url,
             source_type=link_types[i] if i < len(link_types) else "other",
             description=link_descriptions[i].strip() if i < len(link_descriptions) else "",
+            workflow_stage=link_stages[i] if i < len(link_stages) else "engage",
         )
         activity.resources.append(resource)
 

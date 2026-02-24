@@ -63,10 +63,24 @@ class ResourceLink(db.Model):
     title = db.Column(db.String(200), nullable=False)
     source_type = db.Column(db.String(50), nullable=False, default="other")
     description = db.Column(db.Text, default="")
+    workflow_stage = db.Column(db.String(20), nullable=False, default="engage")
 
     SOURCE_TYPES = [
+        ("google_keep", "Google Keep"),
+        ("google_tasks", "Google Tasks"),
+        ("google_docs", "Google Docs"),
         ("google_drive", "Google Drive"),
+        ("diagram", "Diagram"),
+        ("markdown", "Markdown"),
         ("github", "GitHub"),
         ("website", "Website"),
         ("other", "Other"),
+    ]
+
+    # Each tuple: (id, label, description, default_source_type)
+    WORKFLOW_STAGES = [
+        ("capture", "Capture", "Initial notes and ideas — typically Google Keep", "google_keep"),
+        ("organise", "Organise", "Structured tasks and planning — typically Google Tasks", "google_tasks"),
+        ("review", "Review", "Synthesis documents, diagrams, and markdown files", "google_docs"),
+        ("engage", "Engage", "Final outputs and evidence — docs, drive files, code", "google_docs"),
     ]

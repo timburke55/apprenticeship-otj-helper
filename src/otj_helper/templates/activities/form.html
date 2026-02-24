@@ -118,44 +118,198 @@
         </div>
     </div>
 
-    <!-- Resource links -->
+    <!-- CORE Workflow Links -->
     <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Resource Links</h2>
-        <p class="text-sm text-gray-500 mb-4">Link to evidence in Google Drive, GitHub, or other sources.</p>
+        <h2 class="text-lg font-medium text-gray-900 mb-1">CORE Workflow Links</h2>
+        <p class="text-sm text-gray-500 mb-5">
+            Link resources from each stage of the
+            <span class="font-medium">Capture → Organise → Review → Engage</span>
+            workflow. This activity represents the Engage output — link back to earlier stages to show the full journey.
+        </p>
 
-        <div id="resource-links" class="space-y-4">
-            {% if activity and activity.resources %}
-                {% for resource in activity.resources %}
-                <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 rounded-md">
-                    <div class="sm:col-span-3">
-                        <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Link title"
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div class="sm:col-span-5">
-                        <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <select name="link_source_type"
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                            {% for value, label in source_types %}
-                            <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="sm:col-span-2 flex items-center">
-                        <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        <div class="space-y-4">
+
+            <!-- ── Capture ── -->
+            {% set capture_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'capture') | list if activity else [] %}
+            <div class="border border-amber-200 rounded-lg overflow-hidden">
+                <div class="bg-amber-50 border-b border-amber-100 px-4 py-3 flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-200 text-amber-800 text-xs font-bold flex-shrink-0">C</span>
+                    <div>
+                        <h3 class="text-sm font-semibold text-amber-900">Capture</h3>
+                        <p class="text-xs text-amber-700">Initial notes and ideas — typically Google Keep</p>
                     </div>
                 </div>
-                {% endfor %}
-            {% endif %}
-        </div>
+                <div id="links-capture" class="divide-y divide-gray-100">
+                    {% for resource in capture_resources %}
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                        <input type="hidden" name="link_stage" value="capture">
+                        <div class="sm:col-span-3">
+                            <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-5">
+                            <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <select name="link_source_type"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                {% for value, label in source_types %}
+                                <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-1">
+                            <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <button type="button" onclick="this.closest('.resource-row').remove()"
+                                class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="px-4 py-2 bg-amber-50">
+                    <button type="button" onclick="addResourceRow('capture')"
+                        class="text-sm text-amber-700 hover:text-amber-900 font-medium">+ Add Capture link</button>
+                </div>
+            </div>
 
-        <button type="button" onclick="addResourceRow()"
-            class="mt-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-            + Add Link
-        </button>
+            <!-- ── Organise ── -->
+            {% set organise_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'organise') | list if activity else [] %}
+            <div class="border border-blue-200 rounded-lg overflow-hidden">
+                <div class="bg-blue-50 border-b border-blue-100 px-4 py-3 flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex-shrink-0">O</span>
+                    <div>
+                        <h3 class="text-sm font-semibold text-blue-900">Organise</h3>
+                        <p class="text-xs text-blue-700">Structured tasks and planning — typically Google Tasks</p>
+                    </div>
+                </div>
+                <div id="links-organise" class="divide-y divide-gray-100">
+                    {% for resource in organise_resources %}
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                        <input type="hidden" name="link_stage" value="organise">
+                        <div class="sm:col-span-3">
+                            <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-5">
+                            <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <select name="link_source_type"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                {% for value, label in source_types %}
+                                <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-1">
+                            <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <button type="button" onclick="this.closest('.resource-row').remove()"
+                                class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="px-4 py-2 bg-blue-50">
+                    <button type="button" onclick="addResourceRow('organise')"
+                        class="text-sm text-blue-700 hover:text-blue-900 font-medium">+ Add Organise link</button>
+                </div>
+            </div>
+
+            <!-- ── Review ── -->
+            {% set review_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'review') | list if activity else [] %}
+            <div class="border border-violet-200 rounded-lg overflow-hidden">
+                <div class="bg-violet-50 border-b border-violet-100 px-4 py-3 flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-violet-200 text-violet-800 text-xs font-bold flex-shrink-0">R</span>
+                    <div>
+                        <h3 class="text-sm font-semibold text-violet-900">Review</h3>
+                        <p class="text-xs text-violet-700">Synthesis documents, diagrams, and markdown files</p>
+                    </div>
+                </div>
+                <div id="links-review" class="divide-y divide-gray-100">
+                    {% for resource in review_resources %}
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                        <input type="hidden" name="link_stage" value="review">
+                        <div class="sm:col-span-3">
+                            <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-5">
+                            <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <select name="link_source_type"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                {% for value, label in source_types %}
+                                <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-1">
+                            <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <button type="button" onclick="this.closest('.resource-row').remove()"
+                                class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="px-4 py-2 bg-violet-50">
+                    <button type="button" onclick="addResourceRow('review')"
+                        class="text-sm text-violet-700 hover:text-violet-900 font-medium">+ Add Review link</button>
+                </div>
+            </div>
+
+            <!-- ── Engage ── -->
+            {% set engage_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'engage') | list if activity else [] %}
+            <div class="border border-emerald-200 rounded-lg overflow-hidden">
+                <div class="bg-emerald-50 border-b border-emerald-100 px-4 py-3 flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex-shrink-0">E</span>
+                    <div>
+                        <h3 class="text-sm font-semibold text-emerald-900">Engage</h3>
+                        <p class="text-xs text-emerald-700">Final outputs and evidence — docs, drive files, code</p>
+                    </div>
+                </div>
+                <div id="links-engage" class="divide-y divide-gray-100">
+                    {% for resource in engage_resources %}
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                        <input type="hidden" name="link_stage" value="engage">
+                        <div class="sm:col-span-3">
+                            <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-5">
+                            <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <select name="link_source_type"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                {% for value, label in source_types %}
+                                <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2 flex items-center gap-1">
+                            <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <button type="button" onclick="this.closest('.resource-row').remove()"
+                                class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="px-4 py-2 bg-emerald-50">
+                    <button type="button" onclick="addResourceRow('engage')"
+                        class="text-sm text-emerald-700 hover:text-emerald-900 font-medium">+ Add Engage link</button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <!-- Submit -->
@@ -172,13 +326,38 @@
 </form>
 
 <script>
-function addResourceRow() {
-    const container = document.getElementById('resource-links');
+const SOURCE_TYPE_LABELS = {
+    google_keep:  'Google Keep',
+    google_tasks: 'Google Tasks',
+    google_docs:  'Google Docs',
+    google_drive: 'Google Drive',
+    diagram:      'Diagram',
+    markdown:     'Markdown',
+    github:       'GitHub',
+    website:      'Website',
+    other:        'Other',
+};
+
+const STAGE_SOURCE_TYPES = {
+    capture:  ['google_keep', 'website', 'other'],
+    organise: ['google_tasks', 'website', 'other'],
+    review:   ['google_docs', 'diagram', 'markdown', 'google_drive', 'other'],
+    engage:   ['google_docs', 'google_drive', 'github', 'diagram', 'markdown', 'website', 'other'],
+};
+
+function addResourceRow(stage) {
+    const container = document.getElementById('links-' + stage);
+    const types = STAGE_SOURCE_TYPES[stage];
+    const typeOptions = types.map((t, i) =>
+        `<option value="${t}"${i === 0 ? ' selected' : ''}>${SOURCE_TYPE_LABELS[t]}</option>`
+    ).join('');
+
     const row = document.createElement('div');
-    row.className = 'resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 rounded-md';
+    row.className = 'resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50';
     row.innerHTML = `
+        <input type="hidden" name="link_stage" value="${stage}">
         <div class="sm:col-span-3">
-            <input type="text" name="link_title" placeholder="Link title"
+            <input type="text" name="link_title" placeholder="Title"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
         </div>
         <div class="sm:col-span-5">
@@ -188,17 +367,14 @@ function addResourceRow() {
         <div class="sm:col-span-2">
             <select name="link_source_type"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value="google_drive">Google Drive</option>
-                <option value="github">GitHub</option>
-                <option value="website">Website</option>
-                <option value="other">Other</option>
+                ${typeOptions}
             </select>
         </div>
         <div class="sm:col-span-2 flex items-center gap-1">
             <input type="text" name="link_description" placeholder="Note"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             <button type="button" onclick="this.closest('.resource-row').remove()"
-                class="text-gray-400 hover:text-red-500 text-lg">&times;</button>
+                class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
         </div>
     `;
     container.appendChild(row);
