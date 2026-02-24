@@ -1,6 +1,6 @@
 """KSB reference and detail routes."""
 
-from flask import Blueprint, g, render_template
+from flask import Blueprint, abort, g, render_template
 from sqlalchemy import func
 
 from otj_helper.auth import login_required
@@ -13,6 +13,8 @@ bp = Blueprint("ksbs", __name__, url_prefix="/ksbs")
 @login_required
 def list_ksbs():
     uid = g.user.id
+    spec = g.user.selected_spec or "ST0787"
+
     ksbs = (
         db.session.query(
             KSB,
@@ -27,6 +29,7 @@ def list_ksbs():
                 0,
             ).label("total_hours"),
         )
+        .filter(KSB.spec_code == spec)
         .outerjoin(activity_ksbs, KSB.code == activity_ksbs.c.ksb_code)
         .outerjoin(
             Activity,
@@ -52,7 +55,8 @@ def list_ksbs():
 @bp.route("/<code>")
 @login_required
 def detail(code):
-    ksb = KSB.query.get_or_404(code)
+    spec = g.user.selected_spec or "ST0787"
+    ksb = KSB.query.filter_by(code=code, spec_code=spec).first_or_404()
     activities = (
         Activity.query.filter(Activity.ksbs.any(KSB.code == code))
         .filter(Activity.user_id == g.user.id)
