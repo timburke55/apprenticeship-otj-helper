@@ -1,21 +1,30 @@
 """Dashboard route - overview of OTJ hours and KSB coverage."""
 
-from flask import Blueprint, render_template
+from flask import Blueprint, g, render_template
 from sqlalchemy import func
 
+from otj_helper.auth import login_required
 from otj_helper.models import Activity, KSB, activity_ksbs, db
 
 bp = Blueprint("dashboard", __name__)
 
 
 @bp.route("/")
+@login_required
 def index():
+    uid = g.user.id
+
     # Total hours
-    total_hours = db.session.query(func.sum(Activity.duration_hours)).scalar() or 0.0
+    total_hours = (
+        db.session.query(func.sum(Activity.duration_hours))
+        .filter(Activity.user_id == uid)
+        .scalar() or 0.0
+    )
 
     # Hours by activity type
     hours_by_type = (
         db.session.query(Activity.activity_type, func.sum(Activity.duration_hours))
+        .filter(Activity.user_id == uid)
         .group_by(Activity.activity_type)
         .all()
     )
@@ -23,32 +32,42 @@ def index():
     hours_by_type = [(type_labels.get(t, t), h) for t, h in hours_by_type]
 
     # Recent activities
-    recent = Activity.query.order_by(Activity.activity_date.desc()).limit(5).all()
+    recent = (
+        Activity.query.filter_by(user_id=uid)
+        .order_by(Activity.activity_date.desc())
+        .limit(5)
+        .all()
+    )
 
-    # KSB coverage: count of activities per KSB
+    # KSB coverage: count and hours per KSB for this user only.
+    # Outer-join via Activity so KSBs with zero of this user's activities still appear.
     ksb_coverage = (
         db.session.query(
             KSB.code,
             KSB.category,
             KSB.title,
-            func.count(activity_ksbs.c.activity_id).label("activity_count"),
+            func.count(Activity.id).label("activity_count"),
             func.coalesce(
                 db.session.query(func.sum(Activity.duration_hours))
                 .join(activity_ksbs, Activity.id == activity_ksbs.c.activity_id)
                 .filter(activity_ksbs.c.ksb_code == KSB.code)
+                .filter(Activity.user_id == uid)
                 .correlate(KSB)
                 .scalar_subquery(),
                 0,
             ).label("total_hours"),
         )
         .outerjoin(activity_ksbs, KSB.code == activity_ksbs.c.ksb_code)
+        .outerjoin(
+            Activity,
+            (Activity.id == activity_ksbs.c.activity_id) & (Activity.user_id == uid),
+        )
         .group_by(KSB.code, KSB.category, KSB.title)
         .order_by(KSB.code)
         .all()
     )
 
-    # Activity count
-    activity_count = Activity.query.count()
+    activity_count = Activity.query.filter_by(user_id=uid).count()
 
     return render_template(
         "dashboard.html",

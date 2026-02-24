@@ -2,8 +2,9 @@
 
 from datetime import date
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
+from otj_helper.auth import login_required
 from otj_helper.models import Activity, KSB, ResourceLink, db
 
 # Which source types are surfaced per CORE stage (first entry is the default)
@@ -18,12 +19,13 @@ bp = Blueprint("activities", __name__, url_prefix="/activities")
 
 
 @bp.route("/")
+@login_required
 def list_activities():
     page = request.args.get("page", 1, type=int)
     ksb_filter = request.args.get("ksb", None)
     type_filter = request.args.get("type", None)
 
-    query = Activity.query
+    query = Activity.query.filter_by(user_id=g.user.id)
 
     if ksb_filter:
         query = query.filter(Activity.ksbs.any(KSB.code == ksb_filter))
@@ -46,6 +48,7 @@ def list_activities():
 
 
 @bp.route("/new", methods=["GET", "POST"])
+@login_required
 def create():
     if request.method == "POST":
         return _save_activity(Activity())
@@ -63,14 +66,16 @@ def create():
 
 
 @bp.route("/<int:activity_id>")
+@login_required
 def detail(activity_id):
-    activity = Activity.query.get_or_404(activity_id)
+    activity = Activity.query.filter_by(id=activity_id, user_id=g.user.id).first_or_404()
     return render_template("activities/detail.html", activity=activity)
 
 
 @bp.route("/<int:activity_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit(activity_id):
-    activity = Activity.query.get_or_404(activity_id)
+    activity = Activity.query.filter_by(id=activity_id, user_id=g.user.id).first_or_404()
 
     if request.method == "POST":
         return _save_activity(activity)
@@ -88,8 +93,9 @@ def edit(activity_id):
 
 
 @bp.route("/<int:activity_id>/delete", methods=["POST"])
+@login_required
 def delete(activity_id):
-    activity = Activity.query.get_or_404(activity_id)
+    activity = Activity.query.filter_by(id=activity_id, user_id=g.user.id).first_or_404()
     db.session.delete(activity)
     db.session.commit()
     flash("Activity deleted.", "info")
@@ -105,16 +111,18 @@ def _save_activity(activity):
     activity.activity_type = request.form["activity_type"]
     activity.notes = request.form.get("notes", "")
 
+    # Assign owner on new activities
+    if not activity.id:
+        activity.user_id = g.user.id
+
     # Update KSBs
     selected_ksbs = request.form.getlist("ksbs")
     activity.ksbs = KSB.query.filter(KSB.code.in_(selected_ksbs)).all()
 
-    # Handle resource links
-    # Remove existing links if editing
+    # Handle resource links — remove existing if editing
     if activity.id:
         ResourceLink.query.filter_by(activity_id=activity.id).delete()
 
-    # Add new resource links from form
     link_titles = request.form.getlist("link_title")
     link_urls = request.form.getlist("link_url")
     link_types = request.form.getlist("link_source_type")
