@@ -54,6 +54,7 @@ class Activity(db.Model):
 
     ksbs = db.relationship("KSB", secondary=activity_ksbs, backref="activities", lazy="select")
     resources = db.relationship("ResourceLink", backref="activity", cascade="all, delete-orphan")
+    tags = db.relationship("Tag", secondary="activity_tags", backref="activities", lazy="select")
 
     ACTIVITY_TYPES = [
         ("training_course", "Training Course"),
@@ -67,6 +68,24 @@ class Activity(db.Model):
         ("writing", "Writing / Reflection"),
         ("other", "Other"),
     ]
+
+
+# Many-to-many association table for tags
+activity_tags = db.Table(
+    "activity_tags",
+    db.Column("activity_id", db.Integer, db.ForeignKey("activity.id"), primary_key=True),
+    db.Column("tag_id", db.Integer, db.ForeignKey("tag.id"), primary_key=True),
+)
+
+
+class Tag(db.Model):
+    """A user-defined label for categorising activities (e.g. 'systems thinking')."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("app_user.id"), nullable=False)
+
+    __table_args__ = (db.UniqueConstraint("name", "user_id", name="uq_tag_name_user"),)
 
 
 class ResourceLink(db.Model):

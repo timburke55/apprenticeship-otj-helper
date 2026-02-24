@@ -118,6 +118,35 @@
         </div>
     </div>
 
+    <!-- Tags -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-1">Tags</h2>
+        <p class="text-sm text-gray-500 mb-3">Add freeform labels to categorise this activity (e.g. <em>systems thinking, root cause analysis, agile</em>). Separate multiple tags with commas. New tags are created automatically.</p>
+        <input type="text" name="tags" id="tags"
+            value="{{ activity.tags|map(attribute='name')|join(', ') if activity and activity.tags else '' }}"
+            placeholder="e.g. systems thinking, soft systems methodology"
+            list="existing-tags"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        {% if user_tags %}
+        <datalist id="existing-tags">
+            {% for tag in user_tags %}
+            <option value="{{ tag.name }}">
+            {% endfor %}
+        </datalist>
+        {% endif %}
+        {% if user_tags %}
+        <div class="mt-2 flex flex-wrap gap-1">
+            {% for tag in user_tags %}
+            <button type="button"
+                onclick="toggleTag('{{ tag.name }}')"
+                class="tag-suggestion inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 cursor-pointer">
+                {{ tag.name }}
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
     <!-- CORE Workflow Links -->
     <div class="bg-white shadow rounded-lg p-6">
         <h2 class="text-lg font-medium text-gray-900 mb-1">CORE Workflow Links</h2>
@@ -421,5 +450,17 @@ function addResourceRow(stage) {
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('input[name="link_url"]').forEach(attachUrlInference);
 });
+
+function toggleTag(name) {
+    const input = document.getElementById('tags');
+    const current = input.value.split(',').map(t => t.trim()).filter(Boolean);
+    const idx = current.findIndex(t => t.toLowerCase() === name.toLowerCase());
+    if (idx >= 0) {
+        current.splice(idx, 1);
+    } else {
+        current.push(name);
+    }
+    input.value = current.join(', ');
+}
 </script>
 {% endblock %}

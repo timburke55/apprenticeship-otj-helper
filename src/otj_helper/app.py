@@ -50,12 +50,14 @@ def create_app(test_config=None):
     from otj_helper.routes.dashboard import bp as dashboard_bp
     from otj_helper.routes.activities import bp as activities_bp
     from otj_helper.routes.ksbs import bp as ksbs_bp
+    from otj_helper.routes.tags import bp as tags_bp
 
     init_oauth(app)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(activities_bp)
     app.register_blueprint(ksbs_bp)
+    app.register_blueprint(tags_bp)
 
     @app.before_request
     def load_user():
@@ -75,6 +77,8 @@ def _migrate_db():
     migrations = [
         "ALTER TABLE resource_link ADD COLUMN workflow_stage VARCHAR(20) NOT NULL DEFAULT 'engage'",
         "ALTER TABLE activity ADD COLUMN user_id INTEGER REFERENCES app_user(id)",
+        "CREATE TABLE IF NOT EXISTS tag (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50) NOT NULL, user_id INTEGER NOT NULL REFERENCES app_user(id), UNIQUE(name, user_id))",
+        "CREATE TABLE IF NOT EXISTS activity_tags (activity_id INTEGER NOT NULL REFERENCES activity(id), tag_id INTEGER NOT NULL REFERENCES tag(id), PRIMARY KEY (activity_id, tag_id))",
     ]
     for sql in migrations:
         try:
