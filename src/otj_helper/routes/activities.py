@@ -1,10 +1,48 @@
 """Activity CRUD routes."""
 
 from datetime import date
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from otj_helper.models import Activity, KSB, ResourceLink, db
+
+# Query parameters that may contain credentials or session tokens
+_SENSITIVE_PARAMS = {
+    "access_token", "token", "auth_token", "authtoken", "id_token",
+    "api_key", "apikey", "key", "secret", "client_secret",
+    "oauth_token", "oauth_verifier", "code",
+    "password", "passwd", "pwd",
+    "session", "sessionid", "session_id", "sid",
+}
+
+
+def _sanitize_url(url):
+    """Strip sensitive query parameters from a URL.
+
+    Returns (cleaned_url, list_of_removed_param_names).
+    Also rejects non-http(s) schemes, returning (url, None) on bad input.
+    """
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return url, []
+
+    if parsed.scheme not in ("http", "https"):
+        return url, []
+
+    if not parsed.query:
+        return url, []
+
+    params = parse_qs(parsed.query, keep_blank_values=True)
+    removed = [k for k in params if k.lower() in _SENSITIVE_PARAMS]
+    if not removed:
+        return url, []
+
+    cleaned_params = {k: v for k, v in params.items() if k.lower() not in _SENSITIVE_PARAMS}
+    cleaned_query = urlencode(cleaned_params, doseq=True)
+    cleaned = urlunparse(parsed._replace(query=cleaned_query))
+    return cleaned, removed
 
 # Which source types are surfaced per CORE stage (first entry is the default)
 _STAGE_SOURCE_TYPES = {
@@ -121,10 +159,13 @@ def _save_activity(activity):
     link_descriptions = request.form.getlist("link_description")
     link_stages = request.form.getlist("link_stage")
 
+    stripped_params = []
     for i in range(len(link_urls)):
         url = link_urls[i].strip()
         if not url:
             continue
+        url, removed = _sanitize_url(url)
+        stripped_params.extend(removed)
         resource = ResourceLink(
             url=url,
             title=link_titles[i].strip() if i < len(link_titles) else url,
@@ -138,5 +179,13 @@ def _save_activity(activity):
         db.session.add(activity)
 
     db.session.commit()
+
+    if stripped_params:
+        unique = sorted(set(stripped_params))
+        flash(
+            f"Sensitive query parameters were automatically removed from one or more URLs "
+            f"before saving: {', '.join(unique)}.",
+            "info",
+        )
     flash("Activity saved.", "success")
     return redirect(url_for("activities.detail", activity_id=activity.id))
