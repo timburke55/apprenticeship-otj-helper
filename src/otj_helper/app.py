@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from flask import Flask
+from sqlalchemy import text
 
 from otj_helper.models import KSB, db
 from otj_helper.ksb_data import KSBS
@@ -27,6 +28,7 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()
+        _migrate_db()
         _seed_ksbs()
 
     # Register blueprints
@@ -39,6 +41,18 @@ def create_app(test_config=None):
     app.register_blueprint(ksbs_bp)
 
     return app
+
+
+def _migrate_db():
+    """Apply incremental schema migrations for existing databases."""
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(
+                text("ALTER TABLE resource_link ADD COLUMN workflow_stage VARCHAR(20) NOT NULL DEFAULT 'engage'")
+            )
+            conn.commit()
+    except Exception:
+        pass  # Column already exists
 
 
 def _seed_ksbs():
