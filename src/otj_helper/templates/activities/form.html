@@ -345,6 +345,43 @@ const STAGE_SOURCE_TYPES = {
     engage:   ['google_docs', 'google_drive', 'github', 'diagram', 'markdown', 'website', 'other'],
 };
 
+function inferSourceTypeFromUrl(url) {
+    if (!url) return null;
+    try {
+        const u = new URL(url);
+        const host = u.hostname.toLowerCase();
+        const path = u.pathname.toLowerCase();
+
+        if (host === 'keep.google.com') return 'google_keep';
+        if (host === 'tasks.google.com') return 'google_tasks';
+        if (host === 'docs.google.com') return 'google_docs';
+        if (host === 'drive.google.com') return 'google_drive';
+        if (host === 'github.com' || host === 'gist.github.com') return 'github';
+        if (host === 'miro.com' || host === 'lucid.app' || host === 'lucidchart.com' ||
+            host === 'draw.io' || host === 'app.diagrams.net') return 'diagram';
+        if (path.endsWith('.md')) return 'markdown';
+
+        return 'website';
+    } catch (e) {
+        return null;
+    }
+}
+
+function attachUrlInference(urlInput) {
+    urlInput.addEventListener('change', function () {
+        const row = this.closest('.resource-row');
+        const select = row.querySelector('select[name="link_source_type"]');
+        if (!select) return;
+
+        const inferred = inferSourceTypeFromUrl(this.value);
+        if (!inferred) return;
+
+        // Use inferred type if it exists as an option, otherwise fall back to 'other'
+        const match = select.querySelector(`option[value="${inferred}"]`);
+        select.value = match ? inferred : 'other';
+    });
+}
+
 function addResourceRow(stage) {
     const container = document.getElementById('links-' + stage);
     const types = STAGE_SOURCE_TYPES[stage];
@@ -378,6 +415,11 @@ function addResourceRow(stage) {
         </div>
     `;
     container.appendChild(row);
+    attachUrlInference(row.querySelector('input[name="link_url"]'));
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('input[name="link_url"]').forEach(attachUrlInference);
+});
 </script>
 {% endblock %}
