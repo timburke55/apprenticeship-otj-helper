@@ -20,6 +20,7 @@ class User(db.Model):
     selected_spec = db.Column(db.String(20), nullable=True)  # e.g. 'ST0763'
     otj_target_hours = db.Column(db.Float, nullable=True)  # total OTJ hours target for the apprenticeship
     seminar_target_hours = db.Column(db.Float, nullable=True)  # expected total seminar/training hours
+    weekly_target_hours = db.Column(db.Float, nullable=True)  # weekly OTJ hours target
 
     activities = db.relationship("Activity", backref="user", lazy="select")
 
@@ -83,6 +84,14 @@ class Activity(db.Model):
         ("writing", "Writing / Reflection"),
         ("other", "Other"),
     ]
+
+    EVIDENCE_QUALITY_OPTIONS = [
+        ("draft", "Draft"),
+        ("good", "Good"),
+        ("review_ready", "Ready for Review"),
+    ]
+
+    evidence_quality = db.Column(db.String(20), nullable=True, default="draft")
 
 
 # Many-to-many association table for tags

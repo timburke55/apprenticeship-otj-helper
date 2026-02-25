@@ -1,6 +1,6 @@
 """KSB reference and detail routes."""
 
-from flask import Blueprint, abort, g, render_template
+from flask import Blueprint, g, render_template
 from sqlalchemy import func
 
 from otj_helper.auth import login_required

@@ -1,5 +1,6 @@
 """Flask application factory."""
 
+import logging
 import os
 from pathlib import Path
 
@@ -8,11 +9,13 @@ from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import text
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from otj_helper.ksb_data import KSBS
 from otj_helper.models import KSB, db
+from otj_helper.specs_data import SPECS_BY_CODE
+
+logger = logging.getLogger(__name__)
 
 csrf = CSRFProtect()
-from otj_helper.ksb_data import KSBS
-from otj_helper.specs_data import SPECS_BY_CODE
 
 
 def create_app(test_config=None):
@@ -49,8 +52,19 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()
-        _migrate_db()
+        migration_results = _migrate_db()
         _seed_ksbs()
+
+        # Startup diagnostics
+        db_dialect = db.engine.dialect.name
+        oauth_ok = bool(app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET"))
+        dev_login = bool(app.config.get("DEV_AUTO_LOGIN_EMAIL"))
+        applied = sum(1 for ok in migration_results if ok)
+        skipped = sum(1 for ok in migration_results if not ok)
+        logger.info(
+            "Startup: db=%s oauth=%s dev_login=%s migrations(applied=%d skipped=%d)",
+            db_dialect, oauth_ok, dev_login, applied, skipped,
+        )
 
     # Register blueprints
     from otj_helper.routes.auth import bp as auth_bp, init_oauth
@@ -59,6 +73,7 @@ def create_app(test_config=None):
     from otj_helper.routes.activities import bp as activities_bp
     from otj_helper.routes.ksbs import bp as ksbs_bp
     from otj_helper.routes.tags import bp as tags_bp
+    from otj_helper.routes.health import bp as health_bp
 
     init_oauth(app)
     app.register_blueprint(auth_bp)
@@ -67,6 +82,7 @@ def create_app(test_config=None):
     app.register_blueprint(activities_bp)
     app.register_blueprint(ksbs_bp)
     app.register_blueprint(tags_bp)
+    app.register_blueprint(health_bp)
 
     @app.before_request
     def load_user():
@@ -104,25 +120,54 @@ def create_app(test_config=None):
     return app
 
 
-def _migrate_db():
-    """Apply incremental schema migrations for existing databases."""
+def _migrate_db() -> list[bool]:
+    """Apply incremental schema migrations for existing databases.
+
+    Each statement is executed independently.  Errors caused by a column or
+    table already existing are treated as expected and logged at DEBUG level.
+    Unexpected errors are logged at WARNING level.
+
+    Returns a list of booleans indicating whether each migration was applied
+    (True) or skipped (False — already present).
+    """
     migrations = [
         "ALTER TABLE resource_link ADD COLUMN workflow_stage VARCHAR(20) NOT NULL DEFAULT 'engage'",
         "ALTER TABLE activity ADD COLUMN user_id INTEGER REFERENCES app_user(id)",
-        "CREATE TABLE IF NOT EXISTS tag (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50) NOT NULL, user_id INTEGER NOT NULL REFERENCES app_user(id), UNIQUE(name, user_id))",
-        "CREATE TABLE IF NOT EXISTS activity_tags (activity_id INTEGER NOT NULL REFERENCES activity(id), tag_id INTEGER NOT NULL REFERENCES tag(id), PRIMARY KEY (activity_id, tag_id))",
+        (
+            "CREATE TABLE IF NOT EXISTS tag (id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            " name VARCHAR(50) NOT NULL, user_id INTEGER NOT NULL REFERENCES app_user(id),"
+            " UNIQUE(name, user_id))"
+        ),
+        (
+            "CREATE TABLE IF NOT EXISTS activity_tags (activity_id INTEGER NOT NULL REFERENCES activity(id),"
+            " tag_id INTEGER NOT NULL REFERENCES tag(id), PRIMARY KEY (activity_id, tag_id))"
+        ),
         "ALTER TABLE ksb ADD COLUMN spec_code VARCHAR(20) NOT NULL DEFAULT 'ST0787'",
         "ALTER TABLE app_user ADD COLUMN selected_spec VARCHAR(20)",
         "ALTER TABLE app_user ADD COLUMN otj_target_hours REAL",
         "ALTER TABLE app_user ADD COLUMN seminar_target_hours REAL",
+        "ALTER TABLE app_user ADD COLUMN weekly_target_hours REAL",
+        "ALTER TABLE activity ADD COLUMN evidence_quality VARCHAR(20) NOT NULL DEFAULT 'draft'",
     ]
+    results: list[bool] = []
     for sql in migrations:
         try:
             with db.engine.connect() as conn:
                 conn.execute(text(sql))
                 conn.commit()
-        except Exception:
-            pass  # Column/constraint already exists
+            logger.debug("Migration applied: %.80s", sql)
+            results.append(True)
+        except Exception as exc:
+            msg = str(exc).lower()
+            already_exists = any(
+                kw in msg for kw in ("already exists", "duplicate column", "duplicate table")
+            )
+            if already_exists:
+                logger.debug("Migration skipped (already applied): %.80s", sql)
+            else:
+                logger.warning("Migration failed unexpectedly — sql=%.80s error=%s", sql, exc)
+            results.append(False)
+    return results
 
 
 def _seed_ksbs():

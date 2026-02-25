@@ -4,7 +4,13 @@
 {% block content %}
 <div class="sm:flex sm:items-center sm:justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Activities</h1>
-    <a href="/activities/new" class="mt-3 sm:mt-0 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
+    <div class="mt-3 sm:mt-0 flex gap-2">
+        <a href="{{ url_for('activities.export_csv', ksb=ksb_filter or '', type=type_filter or '', tag=tag_filter or '') }}"
+            class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            Export CSV
+        </a>
+        <a href="{{ url_for('activities.create') }}" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
+    </div>
 </div>
 
 <!-- Filters -->

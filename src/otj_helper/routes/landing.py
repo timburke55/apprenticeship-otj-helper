@@ -3,7 +3,7 @@
 from flask import Blueprint, g, redirect, render_template, request, url_for
 
 from otj_helper.auth import login_required
-from otj_helper.models import User, db
+from otj_helper.models import db
 from otj_helper.specs_data import SPECS, SPECS_BY_CODE
 
 bp = Blueprint("landing", __name__)
