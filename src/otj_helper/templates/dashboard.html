@@ -2,6 +2,10 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+        integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+        crossorigin="anonymous"></script>
+
 <div class="mb-8">
     <h1 class="text-2xl font-bold text-gray-900">OTJ Training Dashboard</h1>
     <p class="mt-1 text-sm text-gray-500">{% if current_spec %}{{ current_spec.name }} L{{ current_spec.level }}{% endif %} — Off-the-Job Training Tracker</p>
@@ -12,6 +16,17 @@
     <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
         <dt class="truncate text-sm font-medium text-gray-500">Total OTJ Hours</dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ "%.1f"|format(total_hours) }}</dd>
+        {% if otj_target_hours is not none and otj_target_hours > 0 %}
+        <div class="mt-2">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Target: {{ "%.0f"|format(otj_target_hours) }}h</span>
+                <span>{{ "%.0f"|format([total_hours / otj_target_hours * 100, 100]|min) }}%</span>
+            </div>
+            <div class="bg-gray-200 rounded-full h-1.5">
+                <div class="bg-indigo-600 rounded-full h-1.5" style="width: {{ [total_hours / otj_target_hours * 100, 100]|min }}%"></div>
+            </div>
+        </div>
+        {% endif %}
     </div>
     <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
         <dt class="truncate text-sm font-medium text-gray-500">Activities Logged</dt>
@@ -23,29 +38,104 @@
     </div>
 </div>
 
-<!-- Hours by type -->
-{% if hours_by_type %}
+<!-- Weekly hours chart -->
 <div class="bg-white shadow rounded-lg p-6 mb-8">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">Hours by Activity Type</h2>
-    <div class="space-y-3">
-        {% for type_name, hours in hours_by_type|sort(attribute='1', reverse=True) %}
-        <div class="flex items-center">
-            <span class="w-48 text-sm text-gray-600">{{ type_name }}</span>
-            <div class="flex-1 mx-4">
-                <div class="bg-gray-200 rounded-full h-4">
-                    <div class="bg-indigo-600 rounded-full h-4" style="width: {{ (hours / total_hours * 100) if total_hours else 0 }}%"></div>
-                </div>
-            </div>
-            <span class="text-sm font-medium text-gray-900 w-16 text-right">{{ "%.1f"|format(hours) }}h</span>
-        </div>
-        {% endfor %}
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Hours per Week (last 12 weeks)</h2>
+    <div style="position: relative; height: 200px;">
+        <canvas id="weeklyChart"></canvas>
     </div>
 </div>
-{% endif %}
 
-<!-- KSB Coverage heatmap -->
+<!-- OTJ target & seminar time -->
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-8">
+
+    <!-- Seminar vs total OTJ -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Seminar &amp; Structured Learning</h2>
+        <p class="text-xs text-gray-500 mb-4">Counts Training Course and Workshop activities as seminar time.</p>
+        <div style="position: relative; height: 200px;">
+            <canvas id="seminarChart"></canvas>
+        </div>
+        {% if seminar_target_hours is not none and seminar_target_hours > 0 %}
+        <div class="mt-4">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Seminar target: {{ "%.0f"|format(seminar_target_hours) }}h</span>
+                <span>{{ "%.0f"|format([seminar_hours / seminar_target_hours * 100, 100]|min) }}%</span>
+            </div>
+            <div class="bg-gray-200 rounded-full h-2">
+                <div class="bg-emerald-500 rounded-full h-2" style="width: {{ [seminar_hours / seminar_target_hours * 100, 100]|min }}%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">{{ "%.1f"|format(seminar_hours) }}h logged of {{ "%.0f"|format(seminar_target_hours) }}h target</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Hours targets settings -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-1">Hours Targets</h2>
+        <p class="text-xs text-gray-500 mb-4">Set your total OTJ and seminar hour targets for the apprenticeship.</p>
+        <form method="POST" action="{{ url_for('dashboard.index') }}" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <label for="otj_target_hours" class="block text-sm font-medium text-gray-700">Total OTJ target (hours)</label>
+                <input type="number" id="otj_target_hours" name="otj_target_hours" min="0" step="0.5"
+                    value="{{ "%.1f"|format(otj_target_hours) if otj_target_hours is not none else '' }}"
+                    placeholder="e.g. 460"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
+                <p class="mt-1 text-xs text-gray-400">Typically 20% of total contracted hours (e.g. 37.5h/wk × 24 months ≈ 390–460h)</p>
+            </div>
+            <div>
+                <label for="seminar_target_hours" class="block text-sm font-medium text-gray-700">Seminar time target (hours)</label>
+                <input type="number" id="seminar_target_hours" name="seminar_target_hours" min="0" step="0.5"
+                    value="{{ "%.1f"|format(seminar_target_hours) if seminar_target_hours is not none else '' }}"
+                    placeholder="e.g. 120"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
+                <p class="mt-1 text-xs text-gray-400">Expected hours from Training Course &amp; Workshop activities with your provider</p>
+            </div>
+            <button type="submit"
+                class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none">
+                Save targets
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- KSB Coverage chart -->
 <div class="bg-white shadow rounded-lg p-6 mb-8">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">KSB Coverage</h2>
+    <h2 class="text-lg font-medium text-gray-900 mb-1">KSB Progress</h2>
+    <p class="text-xs text-gray-500 mb-4">Hours logged per KSB. Grey bars have no evidence yet — focus here.</p>
+    {% set k_items = ksb_coverage|selectattr('1', 'equalto', 'knowledge')|list %}
+    {% set s_items = ksb_coverage|selectattr('1', 'equalto', 'skill')|list %}
+    {% set b_items = ksb_coverage|selectattr('1', 'equalto', 'behaviour')|list %}
+
+    <!-- Knowledge -->
+    {% if k_items %}
+    <h3 class="text-sm font-semibold text-knowledge-dark mb-2 mt-4">Knowledge</h3>
+    <div style="position: relative; height: {{ k_items|length * 28 + 10 }}px;">
+        <canvas id="ksbChartK"></canvas>
+    </div>
+    {% endif %}
+
+    <!-- Skills -->
+    {% if s_items %}
+    <h3 class="text-sm font-semibold text-skill-dark mb-2 mt-6">Skills</h3>
+    <div style="position: relative; height: {{ s_items|length * 28 + 10 }}px;">
+        <canvas id="ksbChartS"></canvas>
+    </div>
+    {% endif %}
+
+    <!-- Behaviours -->
+    {% if b_items %}
+    <h3 class="text-sm font-semibold text-behaviour-dark mb-2 mt-6">Behaviours</h3>
+    <div style="position: relative; height: {{ b_items|length * 28 + 10 }}px;">
+        <canvas id="ksbChartB"></canvas>
+    </div>
+    {% endif %}
+</div>
+
+<!-- KSB Coverage pill grid (quick overview) -->
+<div class="bg-white shadow rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">KSB Coverage Map</h2>
     <div class="space-y-4">
         <div>
             <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
@@ -141,4 +231,142 @@
     <p class="text-sm text-gray-500 py-4 text-center">No activities logged yet. <a href="/activities/new" class="text-indigo-600 hover:text-indigo-500">Log your first activity</a>.</p>
     {% endif %}
 </div>
+
+<script>
+(function () {
+    // ── Weekly hours bar chart ──────────────────────────────────────────────
+    const weeklyData = {{ weekly_chart_data|safe }};
+    new Chart(document.getElementById('weeklyChart'), {
+        type: 'bar',
+        data: {
+            labels: weeklyData.labels,
+            datasets: [{
+                label: 'OTJ Hours',
+                data: weeklyData.values,
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 1,
+                borderRadius: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.parsed.y.toFixed(1) + 'h'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => v + 'h' }
+                }
+            }
+        }
+    });
+
+    // ── Seminar vs other OTJ doughnut ────────────────────────────────────────
+    const seminarHours = {{ seminar_hours|float }};
+    const totalHours   = {{ total_hours|float }};
+    const otherHours   = Math.max(0, totalHours - seminarHours);
+    new Chart(document.getElementById('seminarChart'), {
+        type: 'doughnut',
+        data: {
+            labels: totalHours > 0 ? ['Seminar / Structured', 'Other OTJ'] : ['No activities yet'],
+            datasets: [{
+                data: totalHours > 0 ? [seminarHours, otherHours] : [1],
+                backgroundColor: totalHours > 0
+                    ? ['rgba(16, 185, 129, 0.75)', 'rgba(99, 102, 241, 0.5)']
+                    : ['rgba(229, 231, 235, 1)'],
+                borderColor: totalHours > 0
+                    ? ['rgba(16, 185, 129, 1)', 'rgba(99, 102, 241, 1)']
+                    : ['rgba(209, 213, 219, 1)'],
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            if (totalHours === 0) return 'No activities yet';
+                            return ctx.label + ': ' + ctx.parsed.toFixed(1) + 'h';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // ── KSB progress horizontal bar charts ───────────────────────────────────
+    function makeKsbChart(canvasId, items, color, zeroColor) {
+        const el = document.getElementById(canvasId);
+        if (!el || items.length === 0) return;
+        const labels = items.map(i => i.code);
+        const hours  = items.map(i => i.hours);
+        const bgColors = hours.map(h => h > 0 ? color : zeroColor);
+        new Chart(el, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    data: hours.map(h => h > 0 ? h : 0.05),   // tiny stub so zero items are visible
+                    backgroundColor: bgColors,
+                    borderColor: bgColors,
+                    borderWidth: 0,
+                    borderRadius: 3,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const h = items[ctx.dataIndex].hours;
+                                return h > 0 ? h.toFixed(1) + 'h' : 'No evidence yet';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { callback: v => v + 'h' }
+                    },
+                    y: { ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+    }
+
+    {% set k_items = ksb_coverage|selectattr('1', 'equalto', 'knowledge')|list %}
+    {% set s_items = ksb_coverage|selectattr('1', 'equalto', 'skill')|list %}
+    {% set b_items = ksb_coverage|selectattr('1', 'equalto', 'behaviour')|list %}
+
+    makeKsbChart('ksbChartK',
+        [{% for code, cat, title, count, hours in k_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
+        'rgba(59, 130, 246, 0.75)', 'rgba(209, 213, 219, 0.8)'
+    );
+    makeKsbChart('ksbChartS',
+        [{% for code, cat, title, count, hours in s_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
+        'rgba(34, 197, 94, 0.75)', 'rgba(209, 213, 219, 0.8)'
+    );
+    makeKsbChart('ksbChartB',
+        [{% for code, cat, title, count, hours in b_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
+        'rgba(245, 158, 11, 0.75)', 'rgba(209, 213, 219, 0.8)'
+    );
+})();
+</script>
 {% endblock %}
