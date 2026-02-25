@@ -14,10 +14,19 @@ bp = Blueprint("dashboard", __name__)
 
 
 def _weekly_hours(uid: int, weeks: int = 12) -> tuple[list[str], list[float]]:
-    """Return (labels, hours) for the last `weeks` ISO weeks for the given user.
+    """Return (labels, values) for the last *weeks* ISO calendar weeks.
 
-    Labels are 'DD Mon' strings for the Monday of each week.
-    Missing weeks are filled with 0.0.
+    Queries all activities for *uid*, groups them by ISO year+week, then
+    builds an ordered list of the most-recent *weeks* weeks.  Weeks with
+    no logged activities are filled with ``0.0``.
+
+    Args:
+        uid: Primary key of the user whose activities are queried.
+        weeks: Number of most-recent weeks to include (default 12).
+
+    Returns:
+        A 2-tuple of equal-length lists: human-readable week-start labels
+        (e.g. ``"3 Feb"``) and the corresponding total hours as floats.
     """
     activities = (
         db.session.query(Activity.activity_date, Activity.duration_hours)
@@ -49,6 +58,15 @@ def _weekly_hours(uid: int, weeks: int = 12) -> tuple[list[str], list[float]]:
 @bp.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def index():
+    """Render the main dashboard with charts and aggregate stats.
+
+    GET  – displays total hours, weekly bar chart, seminar doughnut, KSB
+           progress charts, coverage map, tag cloud, and recent activities.
+    POST – updates the user's ``otj_target_hours`` and
+           ``seminar_target_hours`` settings, then redirects back to GET.
+           Submitted values are validated to be non-negative floats; invalid
+           or empty values leave the corresponding field unchanged/cleared.
+    """
     # Redirect to landing if the user hasn't chosen a spec yet
     if not g.user.selected_spec:
         return redirect(url_for("landing.index"))
@@ -61,8 +79,14 @@ def index():
         try:
             otj_val = request.form.get("otj_target_hours", "").strip()
             sem_val = request.form.get("seminar_target_hours", "").strip()
-            g.user.otj_target_hours = float(otj_val) if otj_val else None
-            g.user.seminar_target_hours = float(sem_val) if sem_val else None
+            otj_parsed = float(otj_val) if otj_val else None
+            sem_parsed = float(sem_val) if sem_val else None
+            if (otj_parsed is not None and otj_parsed < 0) or (
+                sem_parsed is not None and sem_parsed < 0
+            ):
+                raise ValueError("Targets must be non-negative")
+            g.user.otj_target_hours = otj_parsed
+            g.user.seminar_target_hours = sem_parsed
             db.session.commit()
         except ValueError:
             pass

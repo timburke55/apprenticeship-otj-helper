@@ -38,6 +38,7 @@
                 </td>
                 <td class="px-4 py-3">
                     <form method="post" action="/tags/{{ tag.id }}/rename" class="flex items-center gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="text" name="name" value="{{ tag.name }}" required
                             class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 w-48">
                         <button type="submit" class="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200">Save</button>
@@ -46,6 +47,7 @@
                 <td class="px-4 py-3 text-right">
                     <form method="post" action="/tags/{{ tag.id }}/delete" class="inline"
                         onsubmit="return confirm('Delete tag \'{{ tag.name }}\'? It will be removed from all activities.')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="text-sm text-red-500 hover:text-red-700">Delete</button>
                     </form>
                 </td>

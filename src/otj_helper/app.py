@@ -4,10 +4,13 @@ import os
 from pathlib import Path
 
 from flask import Flask, g, session
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import text
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from otj_helper.models import KSB, db
+
+csrf = CSRFProtect()
 from otj_helper.ksb_data import KSBS
 from otj_helper.specs_data import SPECS_BY_CODE
 
@@ -42,6 +45,7 @@ def create_app(test_config=None):
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     db.init_app(app)
+    csrf.init_app(app)
 
     with app.app_context():
         db.create_all()
