@@ -9,12 +9,13 @@
 
 {% macro ksb_table(items, color_class) %}
 <div class="bg-white shadow rounded-lg overflow-hidden mb-6">
+    <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Code</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Activities</th>
+                <th class="hidden sm:table-cell px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Activities</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Hours</th>
             </tr>
         </thead>
@@ -27,14 +28,15 @@
                     </span>
                 </td>
                 <td class="px-4 py-3">
-                    <a href="/ksbs/{{ ksb.code }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ ksb.title }}</a>
+                    <a href="{{ url_for('ksbs.detail', code=ksb.code) }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ ksb.title }}</a>
                 </td>
-                <td class="px-4 py-3 text-right text-sm {% if count > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ count }}</td>
-                <td class="px-4 py-3 text-right text-sm font-medium {% if hours > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ "%.1f"|format(hours) }}</td>
+                <td class="hidden sm:table-cell px-4 py-3 text-right text-sm {% if count > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ count }}</td>
+                <td class="px-4 py-3 text-right text-sm font-medium whitespace-nowrap {% if hours > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ "%.1f"|format(hours) }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 {% endmacro %}
 

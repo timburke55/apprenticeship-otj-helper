@@ -70,7 +70,19 @@ PRs are reviewed automatically by CodeRabbit. Follow these conventions to avoid 
 - **CDN scripts**: Pin to a specific version (e.g. `chart.js@4.4.7`, not `@4`) and include a matching `integrity="sha384-..."` SRI hash plus `crossorigin="anonymous"`. Obtain the hash from the CDN's own integrity tool or by computing `sha384` of the file.
 
 ### Templates
-- **URL generation**: Use `url_for('blueprint.view')` instead of hardcoded paths. Applies to form `action` attributes and `href` links for routes owned by this app.
+- **URL generation**: Use `url_for('blueprint.view')` instead of hardcoded paths. Applies to form `action` attributes and `href` links for routes owned by this app. **When editing any template file, convert every hardcoded path in that file** — not just the lines you're adding. Run `grep -n 'href="/' <file>` before committing and replace any matches that aren't external URLs. Common endpoint names:
+  - `url_for('landing.index')` → `/`
+  - `url_for('dashboard.index')` → `/dashboard`
+  - `url_for('activities.list_activities')` → `/activities` (accepts `tag=`, `ksb=`, `type=` kwargs for query params)
+  - `url_for('activities.create')` → `/activities/new`
+  - `url_for('activities.detail', activity_id=x)` → `/activities/<id>`
+  - `url_for('activities.edit', activity_id=x)` → `/activities/<id>/edit`
+  - `url_for('ksbs.list_ksbs')` → `/ksbs`
+  - `url_for('ksbs.detail', code=x)` → `/ksbs/<code>`
+  - `url_for('tags.list_tags')` → `/tags`
+  - `url_for('auth.login')` → `/auth/login`
+  - `url_for('auth.logout')` → `/auth/logout`
+  - `url_for('auth.google_login')` → `/auth/google`
 - **Null vs falsy checks**: Use `{% if value is not none %}` rather than `{% if value %}` when `0` is a valid state. Bare truthiness checks hide zero values and can cause division-by-zero in expressions that follow.
 
 ### Python
