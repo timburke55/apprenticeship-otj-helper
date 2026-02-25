@@ -18,6 +18,8 @@ class User(db.Model):
     google_sub = db.Column(db.String(255), unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     selected_spec = db.Column(db.String(20), nullable=True)  # e.g. 'ST0763'
+    otj_target_hours = db.Column(db.Float, nullable=True)  # total OTJ hours target for the apprenticeship
+    seminar_target_hours = db.Column(db.Float, nullable=True)  # expected total seminar/training hours
 
     activities = db.relationship("Activity", backref="user", lazy="select")
 

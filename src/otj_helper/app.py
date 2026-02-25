@@ -109,6 +109,8 @@ def _migrate_db():
         "CREATE TABLE IF NOT EXISTS activity_tags (activity_id INTEGER NOT NULL REFERENCES activity(id), tag_id INTEGER NOT NULL REFERENCES tag(id), PRIMARY KEY (activity_id, tag_id))",
         "ALTER TABLE ksb ADD COLUMN spec_code VARCHAR(20) NOT NULL DEFAULT 'ST0787'",
         "ALTER TABLE app_user ADD COLUMN selected_spec VARCHAR(20)",
+        "ALTER TABLE app_user ADD COLUMN otj_target_hours REAL",
+        "ALTER TABLE app_user ADD COLUMN seminar_target_hours REAL",
     ]
     for sql in migrations:
         try:
