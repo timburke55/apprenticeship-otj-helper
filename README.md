@@ -31,7 +31,17 @@ uv run otj-helper
 
 Then open [http://localhost:5000](http://localhost:5000).
 
-The SQLite database is created automatically at `data/otj.db` on first run, and KSB reference data is seeded automatically. Auth is skipped locally unless you configure Google OAuth credentials.
+The SQLite database is created automatically at `data/otj.db` on first run and KSB reference data is seeded automatically.
+
+### Local login (no Google OAuth needed)
+
+Set `DEV_AUTO_LOGIN_EMAIL` to any email address and the app will automatically create and log in a local user, bypassing the Google OAuth flow entirely:
+
+```bash
+DEV_AUTO_LOGIN_EMAIL=you@example.com uv run otj-helper
+```
+
+The user is created on first run and reused on subsequent runs. Unset the variable (or leave it empty) to use normal Google OAuth.
 
 ## Deploying to Railway
 
@@ -94,6 +104,7 @@ Edit the `ALLOWED_EMAILS` variable in Railway's dashboard. Changes take effect i
 |---|---|---|
 | `OTJ_DB_PATH` | `data/otj.db` | Path to the SQLite database file (local only) |
 | `SECRET_KEY` | `dev-key-change-in-production` | Flask session secret key |
+| `DEV_AUTO_LOGIN_EMAIL` | — | Auto-login as this email locally, bypassing Google OAuth |
 | `GOOGLE_CLIENT_ID` | — | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | — | Google OAuth client secret |
 | `ALLOWED_EMAILS` | — | Comma-separated allowlist (unset = allow all) |
