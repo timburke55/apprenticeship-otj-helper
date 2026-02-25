@@ -11,12 +11,13 @@
 
 {% if tags %}
 <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tag</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Activities</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rename</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Activities</th>
+                <th class="hidden sm:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rename</th>
                 <th class="px-4 py-3"></th>
             </tr>
         </thead>
@@ -26,7 +27,7 @@
                 <td class="px-4 py-3">
                     <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-indigo-50 text-indigo-700">{{ tag.name }}</span>
                 </td>
-                <td class="px-4 py-3 text-sm text-gray-500">
+                <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
                     {% set count = tag_counts[tag.id] %}
                     {% if count > 0 %}
                     <a href="/activities?tag={{ tag.id }}" class="text-indigo-600 hover:text-indigo-500">
@@ -36,25 +37,28 @@
                     <span class="text-gray-400">0 activities</span>
                     {% endif %}
                 </td>
-                <td class="px-4 py-3">
+                <td class="hidden sm:table-cell px-4 py-3">
                     <form method="post" action="/tags/{{ tag.id }}/rename" class="flex items-center gap-2">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="text" name="name" value="{{ tag.name }}" required
-                            class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 w-48">
-                        <button type="submit" class="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200">Save</button>
+                            class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 w-36 sm:w-48">
+                        <button type="submit" class="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 whitespace-nowrap">Save</button>
                     </form>
                 </td>
                 <td class="px-4 py-3 text-right">
                     <form method="post" action="/tags/{{ tag.id }}/delete" class="inline"
                         onsubmit="return confirm('Delete tag \'{{ tag.name }}\'? It will be removed from all activities.')">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="text-sm text-red-500 hover:text-red-700">Delete</button>
+                        <button type="submit" class="text-sm text-red-500 hover:text-red-700 whitespace-nowrap">Delete</button>
                     </form>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
+    <!-- Mobile rename note -->
+    <p class="sm:hidden text-xs text-gray-400 px-4 py-3 border-t border-gray-100">To rename a tag, view on a larger screen.</p>
 </div>
 {% else %}
 <div class="text-center py-12">
