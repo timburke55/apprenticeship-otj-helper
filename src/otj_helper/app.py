@@ -26,6 +26,7 @@ def create_app(test_config=None):
             "OTJ_DB_PATH",
             str(Path(__file__).resolve().parent.parent.parent / "data" / "otj.db"),
         )
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         db_url = f"sqlite:///{db_path}"
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
