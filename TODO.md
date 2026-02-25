@@ -6,3 +6,25 @@
   `focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2` instead of
   `focus:outline-none`, which suppresses the browser's default focus ring for keyboard users.
   Needs a codebase-wide pass rather than a one-off fix. Flagged during PR #14 review.
+
+- **Touch target sizing** — Interactive elements (buttons, links, checkboxes) should meet the
+  44×44 px minimum touch target size recommended by WCAG 2.5.5. The KSB checkbox grid in the
+  activity form and the small "Save" / "Delete" buttons on the tags page are the most likely
+  offenders. Needs audit on an actual mobile device.
+
+## Mobile / Responsive
+
+- **Dashboard chart heights on narrow screens** — KSB progress charts use a fixed pixel height
+  calculated server-side (`{{ k_items|length * 28 + 10 }}px`). On very narrow viewports the
+  bars become too thin to read comfortably. Consider using a JS `ResizeObserver` to reflow the
+  chart height when the container width changes, or increase the per-item multiplier on small
+  screens.
+
+- **Activity form on mobile** — The CORE workflow resource-link rows (`grid grid-cols-1
+  sm:grid-cols-12`) stack to a single column on mobile but the stacked inputs lack visible
+  labels (only placeholders). Adding `<label>` elements (or `aria-label` attributes) for each
+  field would improve both mobile usability and screen reader support.
+
+- **Tags rename on mobile** — The rename form is currently hidden on mobile with a "view on a
+  larger screen" note. A better UX would be an inline-edit pattern or a dedicated rename page
+  that works at any width.

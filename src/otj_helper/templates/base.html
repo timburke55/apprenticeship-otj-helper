@@ -25,22 +25,22 @@
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-16 items-center justify-between">
                     <div class="flex items-center">
-                        <a href="/" class="text-white font-bold text-lg flex-shrink-0">OTJ Tracker</a>
+                        <a href="{{ url_for('landing.index') }}" class="text-white font-bold text-lg flex-shrink-0">OTJ Tracker</a>
                         <div class="hidden md:flex ml-10 items-baseline space-x-4">
-                            <a href="/dashboard" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
-                            <a href="/activities" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Activities</a>
-                            <a href="/ksbs" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">KSBs</a>
-                            <a href="/tags" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Tags</a>
+                            <a href="{{ url_for('dashboard.index') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
+                            <a href="{{ url_for('activities.list_activities') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Activities</a>
+                            <a href="{{ url_for('ksbs.list_ksbs') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">KSBs</a>
+                            <a href="{{ url_for('tags.list_tags') }}" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Tags</a>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <a href="/activities/new" class="hidden md:inline-flex rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
+                        <a href="{{ url_for('activities.create') }}" class="hidden md:inline-flex rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
                         {% if current_user %}
                         {% if current_spec %}
-                        <a href="/" class="hidden lg:block text-xs text-gray-400 hover:text-gray-200 border border-gray-600 rounded px-2 py-1">{{ current_spec.name }} L{{ current_spec.level }}</a>
+                        <a href="{{ url_for('landing.index') }}" class="hidden lg:block text-xs text-gray-400 hover:text-gray-200 border border-gray-600 rounded px-2 py-1">{{ current_spec.name }} L{{ current_spec.level }}</a>
                         {% endif %}
                         <span class="hidden md:block text-sm text-gray-400">{{ current_user.name or current_user.email }}</span>
-                        <a href="/auth/logout" class="hidden md:block text-sm text-gray-400 hover:text-white">Sign out</a>
+                        <a href="{{ url_for('auth.logout') }}" class="hidden md:block text-sm text-gray-400 hover:text-white">Sign out</a>
                         {% endif %}
                         <!-- Mobile menu button -->
                         <button type="button" id="mobile-menu-btn"
@@ -60,18 +60,18 @@
             <!-- Mobile menu panel -->
             <div class="md:hidden hidden" id="mobile-menu">
                 <div class="space-y-1 px-2 pb-3 pt-2 border-t border-gray-700">
-                    <a href="/dashboard" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
-                    <a href="/activities" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Activities</a>
-                    <a href="/ksbs" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">KSBs</a>
-                    <a href="/tags" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Tags</a>
-                    <a href="/activities/new" class="block rounded-md bg-indigo-600 px-3 py-2 text-base font-semibold text-white hover:bg-indigo-500">+ Log Activity</a>
+                    <a href="{{ url_for('dashboard.index') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
+                    <a href="{{ url_for('activities.list_activities') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Activities</a>
+                    <a href="{{ url_for('ksbs.list_ksbs') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">KSBs</a>
+                    <a href="{{ url_for('tags.list_tags') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Tags</a>
+                    <a href="{{ url_for('activities.create') }}" class="block rounded-md bg-indigo-600 px-3 py-2 text-base font-semibold text-white hover:bg-indigo-500">+ Log Activity</a>
                     {% if current_user %}
                     <div class="border-t border-gray-700 pt-2 mt-2">
                         <p class="px-3 py-1 text-sm text-gray-400">{{ current_user.name or current_user.email }}</p>
                         {% if current_spec %}
                         <p class="px-3 py-1 text-xs text-gray-500">{{ current_spec.name }} L{{ current_spec.level }}</p>
                         {% endif %}
-                        <a href="/auth/logout" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Sign out</a>
+                        <a href="{{ url_for('auth.logout') }}" class="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Sign out</a>
                     </div>
                     {% endif %}
                 </div>
