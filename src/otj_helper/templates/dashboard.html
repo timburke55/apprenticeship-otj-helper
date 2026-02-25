@@ -356,15 +356,15 @@
     {% set b_items = ksb_coverage|selectattr('1', 'equalto', 'behaviour')|list %}
 
     makeKsbChart('ksbChartK',
-        [{% for code, cat, title, count, hours in k_items %}{code:'{{ natural_code(code) }}', hours:{{ hours|float }}},{% endfor %}],
+        [{% for code, cat, title, count, hours in k_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
         'rgba(59, 130, 246, 0.75)', 'rgba(209, 213, 219, 0.8)'
     );
     makeKsbChart('ksbChartS',
-        [{% for code, cat, title, count, hours in s_items %}{code:'{{ natural_code(code) }}', hours:{{ hours|float }}},{% endfor %}],
+        [{% for code, cat, title, count, hours in s_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
         'rgba(34, 197, 94, 0.75)', 'rgba(209, 213, 219, 0.8)'
     );
     makeKsbChart('ksbChartB',
-        [{% for code, cat, title, count, hours in b_items %}{code:'{{ natural_code(code) }}', hours:{{ hours|float }}},{% endfor %}],
+        [{% for code, cat, title, count, hours in b_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
         'rgba(245, 158, 11, 0.75)', 'rgba(209, 213, 219, 0.8)'
     );
 })();
