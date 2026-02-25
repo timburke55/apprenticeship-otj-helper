@@ -2,8 +2,9 @@
 
 import os
 
+from authlib.integrations.base_client.errors import OAuthError
 from authlib.integrations.flask_client import OAuth
-from flask import Blueprint, g, redirect, render_template, session, url_for
+from flask import Blueprint, flash, g, redirect, render_template, session, url_for
 
 from otj_helper.models import User, db
 
@@ -36,13 +37,30 @@ def login():
 
 @bp.route("/google")
 def google_login():
+    if not oauth.google.client_id or not oauth.google.client_secret:
+        flash(
+            "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and "
+            "GOOGLE_CLIENT_SECRET environment variables, or use "
+            "DEV_AUTO_LOGIN_EMAIL for local development.",
+            "error",
+        )
+        return redirect(url_for("auth.login"))
     redirect_uri = url_for("auth.callback", _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
 
 
 @bp.route("/callback")
 def callback():
-    token = oauth.google.authorize_access_token()
+    try:
+        token = oauth.google.authorize_access_token()
+    except OAuthError as e:
+        flash(
+            f"Google sign-in failed: {e.description or str(e)}. "
+            "Check that your GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are correct "
+            "and that the redirect URI is authorised in Google Cloud Console.",
+            "error",
+        )
+        return redirect(url_for("auth.login"))
     userinfo = token.get("userinfo")
 
     email = userinfo["email"].lower()
