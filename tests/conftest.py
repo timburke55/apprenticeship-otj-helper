@@ -28,5 +28,10 @@ def client(app):
 
 @pytest.fixture()
 def _with_spec(client):
-    """Set the ST0787 spec on the auto-login test user."""
-    client.get("/select-spec?spec=ST0787", follow_redirects=True)
+    """Set the ST0787 spec on the auto-login test user.
+
+    Asserts the redirect succeeds so test failures surface fixture problems
+    rather than hiding them as unrelated assertion errors later.
+    """
+    resp = client.get("/select-spec?spec=ST0787", follow_redirects=True)
+    assert resp.status_code == 200, f"_with_spec fixture failed: HTTP {resp.status_code}"

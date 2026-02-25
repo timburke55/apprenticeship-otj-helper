@@ -5,7 +5,7 @@ import math
 from collections import defaultdict
 from datetime import date, timedelta
 
-from flask import Blueprint, g, redirect, render_template, request, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 from sqlalchemy import func
 
 from otj_helper.auth import login_required
@@ -91,8 +91,8 @@ def index():
             g.user.seminar_target_hours = sem_parsed
             g.user.weekly_target_hours = wk_parsed
             db.session.commit()
-        except ValueError:
-            pass
+        except ValueError as exc:
+            flash(str(exc), "error")
         return redirect(url_for("dashboard.index"))
 
     # Total hours

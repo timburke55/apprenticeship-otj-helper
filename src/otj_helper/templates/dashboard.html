@@ -172,7 +172,7 @@
             <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
             <div class="flex flex-wrap gap-2">
                 {% for code, category, title, count, hours in ksb_coverage if category == 'knowledge' %}
-                <a href="/ksbs/{{ code }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
+                <a href="{{ url_for('ksbs.detail', code=code) }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
                     {% if count > 0 %}bg-knowledge-light text-knowledge-dark{% else %}bg-gray-100 text-gray-400{% endif %}
                     hover:ring-2 hover:ring-knowledge">
                     {{ natural_code(code) }}
@@ -185,7 +185,7 @@
             <h3 class="text-sm font-semibold text-skill-dark mb-2">Skills</h3>
             <div class="flex flex-wrap gap-2">
                 {% for code, category, title, count, hours in ksb_coverage if category == 'skill' %}
-                <a href="/ksbs/{{ code }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
+                <a href="{{ url_for('ksbs.detail', code=code) }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
                     {% if count > 0 %}bg-skill-light text-skill-dark{% else %}bg-gray-100 text-gray-400{% endif %}
                     hover:ring-2 hover:ring-skill">
                     {{ natural_code(code) }}
@@ -198,7 +198,7 @@
             <h3 class="text-sm font-semibold text-behaviour-dark mb-2">Behaviours</h3>
             <div class="flex flex-wrap gap-2">
                 {% for code, category, title, count, hours in ksb_coverage if category == 'behaviour' %}
-                <a href="/ksbs/{{ code }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
+                <a href="{{ url_for('ksbs.detail', code=code) }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
                     {% if count > 0 %}bg-behaviour-light text-behaviour-dark{% else %}bg-gray-100 text-gray-400{% endif %}
                     hover:ring-2 hover:ring-behaviour">
                     {{ natural_code(code) }}
@@ -215,11 +215,11 @@
 <div class="bg-white shadow rounded-lg p-6 mb-8">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-900">Tags</h2>
-        <a href="/tags" class="text-sm text-indigo-600 hover:text-indigo-500">Manage tags</a>
+        <a href="{{ url_for('tags.list_tags') }}" class="text-sm text-indigo-600 hover:text-indigo-500">Manage tags</a>
     </div>
     <div class="flex flex-wrap gap-2">
         {% for tag, count in top_tags %}
-        <a href="/activities?tag={{ tag.id }}"
+        <a href="{{ url_for('activities.list_activities', tag=tag.id) }}"
             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
             {{ tag.name }}
             <span class="text-xs text-indigo-400">{{ count }}</span>
@@ -233,7 +233,7 @@
 <div class="bg-white shadow rounded-lg p-6">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium text-gray-900">Recent Activities</h2>
-        <a href="/activities" class="text-sm text-indigo-600 hover:text-indigo-500">View all</a>
+        <a href="{{ url_for('activities.list_activities') }}" class="text-sm text-indigo-600 hover:text-indigo-500">View all</a>
     </div>
     {% if recent %}
     <div class="divide-y divide-gray-100">
@@ -241,7 +241,7 @@
         <div class="py-3">
             <div class="flex justify-between items-start">
                 <div>
-                    <a href="/activities/{{ activity.id }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ activity.title }}</a>
+                    <a href="{{ url_for('activities.detail', activity_id=activity.id) }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ activity.title }}</a>
                     <p class="text-xs text-gray-500 mt-0.5">{{ activity.activity_date.strftime('%d %b %Y') }} &middot; {{ "%.1f"|format(activity.duration_hours) }}h</p>
                 </div>
                 <div class="flex gap-1">
@@ -259,7 +259,7 @@
         {% endfor %}
     </div>
     {% else %}
-    <p class="text-sm text-gray-500 py-4 text-center">No activities logged yet. <a href="/activities/new" class="text-indigo-600 hover:text-indigo-500">Log your first activity</a>.</p>
+    <p class="text-sm text-gray-500 py-4 text-center">No activities logged yet. <a href="{{ url_for('activities.create') }}" class="text-indigo-600 hover:text-indigo-500">Log your first activity</a>.</p>
     {% endif %}
 </div>
 

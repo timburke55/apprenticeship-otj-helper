@@ -64,7 +64,7 @@ def list_activities():
     page = request.args.get("page", 1, type=int)
     ksb_filter = request.args.get("ksb", None)
     type_filter = request.args.get("type", None)
-    tag_filter = request.args.get("tag", None)
+    tag_filter = request.args.get("tag", None, type=int)
 
     query = Activity.query.filter_by(user_id=g.user.id)
 
@@ -72,7 +72,7 @@ def list_activities():
         query = query.filter(Activity.ksbs.any(KSB.code == ksb_filter))
     if type_filter:
         query = query.filter(Activity.activity_type == type_filter)
-    if tag_filter:
+    if tag_filter is not None:
         query = query.filter(Activity.tags.any(Tag.id == tag_filter))
 
     activities = query.order_by(Activity.activity_date.desc()).paginate(
@@ -104,7 +104,7 @@ def export_csv():
     """
     ksb_filter = request.args.get("ksb", None)
     type_filter = request.args.get("type", None)
-    tag_filter = request.args.get("tag", None)
+    tag_filter = request.args.get("tag", None, type=int)
 
     query = Activity.query.filter_by(user_id=g.user.id)
 
@@ -112,7 +112,7 @@ def export_csv():
         query = query.filter(Activity.ksbs.any(KSB.code == ksb_filter))
     if type_filter:
         query = query.filter(Activity.activity_type == type_filter)
-    if tag_filter:
+    if tag_filter is not None:
         query = query.filter(Activity.tags.any(Tag.id == tag_filter))
 
     activities = query.order_by(Activity.activity_date.desc()).all()

@@ -1,6 +1,7 @@
 """Database models for OTJ tracking."""
 
 from datetime import date, datetime
+from typing import ClassVar
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -85,7 +86,7 @@ class Activity(db.Model):
         ("other", "Other"),
     ]
 
-    EVIDENCE_QUALITY_OPTIONS = [
+    EVIDENCE_QUALITY_OPTIONS: ClassVar[list[tuple[str, str]]] = [
         ("draft", "Draft"),
         ("good", "Good"),
         ("review_ready", "Ready for Review"),
