@@ -1,11 +1,10 @@
 """Dashboard route - overview of OTJ hours and KSB coverage."""
 
-import json
 import math
 from collections import defaultdict
 from datetime import date, timedelta
 
-from flask import Blueprint, g, redirect, render_template, request, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 from sqlalchemy import func
 
 from otj_helper.auth import login_required
@@ -80,17 +79,19 @@ def index():
         try:
             otj_val = request.form.get("otj_target_hours", "").strip()
             sem_val = request.form.get("seminar_target_hours", "").strip()
+            wk_val = request.form.get("weekly_target_hours", "").strip()
             otj_parsed = float(otj_val) if otj_val else None
             sem_parsed = float(sem_val) if sem_val else None
-            if otj_parsed is not None and (not math.isfinite(otj_parsed) or otj_parsed < 0):
-                raise ValueError("Targets must be non-negative and finite")
-            if sem_parsed is not None and (not math.isfinite(sem_parsed) or sem_parsed < 0):
-                raise ValueError("Targets must be non-negative and finite")
+            wk_parsed = float(wk_val) if wk_val else None
+            for val, label in [(otj_parsed, "OTJ"), (sem_parsed, "Seminar"), (wk_parsed, "Weekly")]:
+                if val is not None and (not math.isfinite(val) or val < 0):
+                    raise ValueError(f"{label} target must be non-negative and finite")
             g.user.otj_target_hours = otj_parsed
             g.user.seminar_target_hours = sem_parsed
+            g.user.weekly_target_hours = wk_parsed
             db.session.commit()
-        except ValueError:
-            pass
+        except ValueError as exc:
+            flash(str(exc), "error")
         return redirect(url_for("dashboard.index"))
 
     # Total hours
@@ -122,7 +123,21 @@ def index():
 
     # Weekly hours for the last 12 weeks (for the bar chart)
     week_labels, week_values = _weekly_hours(uid, weeks=12)
-    weekly_chart_data = json.dumps({"labels": week_labels, "values": week_values})
+    weekly_chart_data = {"labels": week_labels, "values": week_values}
+
+    # Hours logged in the current ISO calendar week
+    today = date.today()
+    current_week_start = today - timedelta(days=today.weekday())
+    current_week_end = current_week_start + timedelta(days=6)
+    this_week_hours = (
+        db.session.query(func.sum(Activity.duration_hours))
+        .filter(
+            Activity.user_id == uid,
+            Activity.activity_date >= current_week_start,
+            Activity.activity_date <= current_week_end,
+        )
+        .scalar() or 0.0
+    )
 
     # Recent activities
     recent = (
@@ -184,6 +199,8 @@ def index():
         top_tags=top_tags,
         seminar_hours=seminar_hours,
         weekly_chart_data=weekly_chart_data,
+        this_week_hours=this_week_hours,
         otj_target_hours=g.user.otj_target_hours,
         seminar_target_hours=g.user.seminar_target_hours,
+        weekly_target_hours=g.user.weekly_target_hours,
     )

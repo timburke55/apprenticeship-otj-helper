@@ -1,6 +1,6 @@
 """Tags CRUD routes."""
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 
 from otj_helper.auth import login_required
 from otj_helper.models import Tag, db
