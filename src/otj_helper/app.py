@@ -23,15 +23,22 @@ def create_app(test_config=None):
 
     # Database: prefer DATABASE_URL (Railway PostgreSQL), fall back to SQLite
     db_url = os.environ.get("DATABASE_URL")
+    _sqlite_ephemeral_warning = False
     if db_url:
         # Railway historically issued postgres:// which SQLAlchemy rejects
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql://", 1)
     else:
-        db_path = os.environ.get(
-            "OTJ_DB_PATH",
-            str(Path(__file__).resolve().parent.parent.parent / "data" / "otj.db"),
-        )
+        db_path = os.environ.get("OTJ_DB_PATH")
+        if db_path is None:
+            # No explicit path — using the default location inside the repo.
+            # On Railway (and most cloud platforms) this directory is ephemeral:
+            # data will be wiped on every deploy.  Add a PostgreSQL database to
+            # Railway and it will set DATABASE_URL automatically.
+            _sqlite_ephemeral_warning = True
+            db_path = str(
+                Path(__file__).resolve().parent.parent.parent / "data" / "otj.db"
+            )
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         db_url = f"sqlite:///{db_path}"
 
@@ -65,6 +72,13 @@ def create_app(test_config=None):
             "Startup: db=%s oauth=%s dev_login=%s migrations(applied=%d skipped=%d)",
             db_dialect, oauth_ok, dev_login, applied, skipped,
         )
+        if _sqlite_ephemeral_warning:
+            logger.warning(
+                "Using SQLite at the default path with no DATABASE_URL set. "
+                "On Railway and other cloud platforms the filesystem is ephemeral — "
+                "all data will be lost on every deploy. "
+                "Add a PostgreSQL database to your Railway project to persist data."
+            )
 
     # Register blueprints
     from otj_helper.routes.auth import bp as auth_bp, init_oauth

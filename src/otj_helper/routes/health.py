@@ -21,6 +21,7 @@ def healthz():
     except Exception:
         db_status = "error"
 
+    db_type = db.engine.dialect.name  # "sqlite" or "postgresql"
     status = "ok" if db_status == "connected" else "degraded"
     code = 200 if status == "ok" else 503
-    return jsonify({"status": status, "db": db_status, "version": "0.1.0"}), code
+    return jsonify({"status": status, "db": db_status, "db_type": db_type, "version": "0.1.0"}), code
