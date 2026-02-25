@@ -1,6 +1,5 @@
 """Dashboard route - overview of OTJ hours and KSB coverage."""
 
-import json
 import math
 from collections import defaultdict
 from datetime import date, timedelta
@@ -124,7 +123,7 @@ def index():
 
     # Weekly hours for the last 12 weeks (for the bar chart)
     week_labels, week_values = _weekly_hours(uid, weeks=12)
-    weekly_chart_data = json.dumps({"labels": week_labels, "values": week_values})
+    weekly_chart_data = {"labels": week_labels, "values": week_values}
 
     # Hours logged in the current ISO calendar week
     today = date.today()

@@ -266,7 +266,7 @@
 <script>
 (function () {
     // ── Weekly hours bar chart ──────────────────────────────────────────────
-    const weeklyData = {{ weekly_chart_data|safe }};
+    const weeklyData = {{ weekly_chart_data|tojson }};
     new Chart(document.getElementById('weeklyChart'), {
         type: 'bar',
         data: {

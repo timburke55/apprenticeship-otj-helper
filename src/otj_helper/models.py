@@ -73,7 +73,7 @@ class Activity(db.Model):
     resources = db.relationship("ResourceLink", backref="activity", cascade="all, delete-orphan")
     tags = db.relationship("Tag", secondary="activity_tags", backref="activities", lazy="select")
 
-    ACTIVITY_TYPES = [
+    ACTIVITY_TYPES: ClassVar[list[tuple[str, str]]] = [
         ("training_course", "Training Course"),
         ("self_study", "Self-Study"),
         ("mentoring", "Mentoring"),
@@ -124,7 +124,7 @@ class ResourceLink(db.Model):
     description = db.Column(db.Text, default="")
     workflow_stage = db.Column(db.String(20), nullable=False, default="engage")
 
-    SOURCE_TYPES = [
+    SOURCE_TYPES: ClassVar[list[tuple[str, str]]] = [
         ("google_keep", "Google Keep"),
         ("google_tasks", "Google Tasks"),
         ("google_docs", "Google Docs"),
@@ -137,7 +137,7 @@ class ResourceLink(db.Model):
     ]
 
     # Each tuple: (id, label, description, default_source_type)
-    WORKFLOW_STAGES = [
+    WORKFLOW_STAGES: ClassVar[list[tuple[str, str, str, str]]] = [
         ("capture", "Capture", "Initial notes and ideas — typically Google Keep", "google_keep"),
         ("organise", "Organise", "Structured tasks and planning — typically Google Tasks", "google_tasks"),
         ("review", "Review", "Synthesis documents, diagrams, and markdown files", "google_docs"),

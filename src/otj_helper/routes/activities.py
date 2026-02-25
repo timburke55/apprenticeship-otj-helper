@@ -29,24 +29,15 @@ bp = Blueprint("activities", __name__, url_prefix="/activities")
 
 def _validate_url(url: str) -> bool:
     """Return True if *url* is a well-formed http or https URL."""
-    try:
-        parsed = urlparse(url)
-        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
-    except Exception:
-        return False
+    parsed = urlparse(url)
+    return parsed.scheme in ("http", "https") and bool(parsed.netloc)
 
 
 def _form_context(activity):
-    """Return the template-context dict needed to render the activity form.
-
-    Passes ``activity=None`` for unsaved (new) activities so the template
-    renders blank fields rather than crashing on unset column values.
-    """
+    """Return the template-context dict needed to render the activity form."""
     spec = g.user.selected_spec or "ST0787"
-    # A persisted activity (edit) has an integer id; blank new activities don't.
-    template_activity = activity if (activity and activity.id) else None
     return dict(
-        activity=template_activity,
+        activity=activity,
         all_ksbs=KSB.query.filter_by(spec_code=spec).order_by(KSB.code).all(),
         activity_types=Activity.ACTIVITY_TYPES,
         evidence_quality_options=Activity.EVIDENCE_QUALITY_OPTIONS,
@@ -230,6 +221,15 @@ def _save_activity(activity):
         sample = ", ".join(bad_urls[:3])
         errors.append(f"Resource link URL(s) must start with http:// or https://: {sample}")
 
+    # --- Populate submitted values onto the activity so re-renders are pre-filled ---
+    activity.title = request.form.get("title", "")
+    activity.description = request.form.get("description", "")
+    activity.notes = request.form.get("notes", "")
+    activity.activity_type = activity_type or ""
+    activity.evidence_quality = evidence_quality
+    activity.activity_date = activity_date   # may be None if parse failed; template handles it
+    activity.duration_hours = duration       # may be None if parse failed; template handles it
+
     # --- Early return on errors (no DB writes have occurred) ---
     if errors:
         for msg in errors:
@@ -243,25 +243,15 @@ def _save_activity(activity):
         KSB.code.in_(selected_codes), KSB.spec_code == spec
     ).all()
 
-    activity.title = request.form["title"]
-    activity.description = request.form.get("description", "")
-    activity.activity_date = activity_date
-    activity.duration_hours = duration
-    activity.activity_type = activity_type
-    activity.evidence_quality = evidence_quality
-    activity.notes = request.form.get("notes", "")
-
     # Assign owner on new activities
     if not activity.id:
         activity.user_id = g.user.id
 
     # --- Tags: deduplicate while preserving submission order ---
     raw_tags = request.form.get("tags", "")
-    seen: dict[str, bool] = {}
-    for t in raw_tags.split(","):
-        name = t.strip().lower()
-        if name and name not in seen:
-            seen[name] = True
+    seen = dict.fromkeys(
+        t.strip().lower() for t in raw_tags.split(",") if t.strip().lower()
+    )
     resolved_tags = []
     for name in seen:
         tag = Tag.query.filter_by(name=name, user_id=g.user.id).first()
