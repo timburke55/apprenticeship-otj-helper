@@ -31,7 +31,7 @@
                     <span class="hidden sm:block text-sm text-gray-400 truncate max-w-[12rem]">{{ current_user.name or current_user.email }}</span>
                     <a href="{{ url_for('auth.logout') }}" class="text-sm text-gray-400 hover:text-white whitespace-nowrap">Sign out</a>
                     {% else %}
-                    <a href="/auth/login" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Sign in</a>
+                    <a href="{{ url_for('auth.login') }}" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Sign in</a>
                     {% endif %}
                 </div>
             </div>

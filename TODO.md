@@ -8,7 +8,7 @@
   Needs a codebase-wide pass rather than a one-off fix. Flagged during PR #14 review.
 
 - **Touch target sizing** — Interactive elements (buttons, links, checkboxes) should meet the
-  44×44 px minimum touch target size recommended by WCAG 2.5.5. The KSB checkbox grid in the
+  44×44 CSS px minimum defined by WCAG 2.1 SC 2.5.5 (Level AAA). The KSB checkbox grid in the
   activity form and the small "Save" / "Delete" buttons on the tags page are the most likely
   offenders. Needs audit on an actual mobile device.
 
@@ -28,3 +28,13 @@
 - **Tags rename on mobile** — The rename form is currently hidden on mobile with a "view on a
   larger screen" note. A better UX would be an inline-edit pattern or a dedicated rename page
   that works at any width.
+
+## Code Quality
+
+- **Remaining hardcoded `href` paths** — The following template files still contain hardcoded
+  paths instead of `url_for()` calls. They were not in scope for PR #18 but should be cleaned
+  up in a dedicated pass:
+  - `templates/activities/detail.html` — 4 occurrences (`/activities/<id>`, `/activities/<id>/edit`, `/ksbs/<code>`, `/activities?tag=`)
+  - `templates/ksbs/detail.html` — 3 occurrences (`/activities/<id>`, `/activities/new`, `/ksbs`)
+  - `templates/auth/login.html` — 1 occurrence (`/auth/google`)
+  - `templates/auth/denied.html` — 1 occurrence (`/auth/login`)

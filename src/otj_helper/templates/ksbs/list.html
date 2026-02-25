@@ -28,7 +28,7 @@
                     </span>
                 </td>
                 <td class="px-4 py-3">
-                    <a href="/ksbs/{{ ksb.code }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ ksb.title }}</a>
+                    <a href="{{ url_for('ksbs.detail', code=ksb.code) }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ ksb.title }}</a>
                 </td>
                 <td class="hidden sm:table-cell px-4 py-3 text-right text-sm {% if count > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ count }}</td>
                 <td class="px-4 py-3 text-right text-sm font-medium whitespace-nowrap {% if hours > 0 %}text-gray-900{% else %}text-gray-300{% endif %}">{{ "%.1f"|format(hours) }}</td>

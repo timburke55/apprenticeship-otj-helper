@@ -30,7 +30,7 @@
                 <td class="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
                     {% set count = tag_counts[tag.id] %}
                     {% if count > 0 %}
-                    <a href="/activities?tag={{ tag.id }}" class="text-indigo-600 hover:text-indigo-500">
+                    <a href="{{ url_for('activities.list_activities', tag=tag.id) }}" class="text-indigo-600 hover:text-indigo-500">
                         {{ count }} activit{{ 'y' if count == 1 else 'ies' }}
                     </a>
                     {% else %}
@@ -63,7 +63,7 @@
 {% else %}
 <div class="text-center py-12">
     <p class="text-sm text-gray-500">No tags yet.</p>
-    <p class="mt-1 text-sm text-gray-400">Tags are created when you add them to an activity. <a href="/activities/new" class="text-indigo-600 hover:text-indigo-500">Log an activity</a> to get started.</p>
+    <p class="mt-1 text-sm text-gray-400">Tags are created when you add them to an activity. <a href="{{ url_for('activities.create') }}" class="text-indigo-600 hover:text-indigo-500">Log an activity</a> to get started.</p>
 </div>
 {% endif %}
 {% endblock %}
