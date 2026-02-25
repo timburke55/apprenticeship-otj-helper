@@ -1,6 +1,7 @@
 """Dashboard route - overview of OTJ hours and KSB coverage."""
 
 import json
+import math
 from collections import defaultdict
 from datetime import date, timedelta
 
@@ -50,7 +51,7 @@ def _weekly_hours(uid: int, weeks: int = 12) -> tuple[list[str], list[float]]:
         iso = monday.isocalendar()
         key = (iso[0], iso[1])
         labels.append(monday.strftime("%-d %b"))
-        values.append(round(totals.get(key, 0.0), 2))
+        values.append(round(totals.get(key, 0.0), 1))
 
     return labels, values
 
@@ -81,10 +82,10 @@ def index():
             sem_val = request.form.get("seminar_target_hours", "").strip()
             otj_parsed = float(otj_val) if otj_val else None
             sem_parsed = float(sem_val) if sem_val else None
-            if (otj_parsed is not None and otj_parsed < 0) or (
-                sem_parsed is not None and sem_parsed < 0
-            ):
-                raise ValueError("Targets must be non-negative")
+            if otj_parsed is not None and (not math.isfinite(otj_parsed) or otj_parsed < 0):
+                raise ValueError("Targets must be non-negative and finite")
+            if sem_parsed is not None and (not math.isfinite(sem_parsed) or sem_parsed < 0):
+                raise ValueError("Targets must be non-negative and finite")
             g.user.otj_target_hours = otj_parsed
             g.user.seminar_target_hours = sem_parsed
             db.session.commit()
