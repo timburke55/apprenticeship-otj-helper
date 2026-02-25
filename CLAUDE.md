@@ -58,3 +58,21 @@ Jinja2 templates under `src/otj_helper/templates/`. Base layout in `base.html` u
 The activity form (`templates/activities/form.html`) dynamically handles a variable number of resource link rows via JavaScript; the route handler in `routes/activities.py` reads parallel lists from `request.form.getlist(...)` to reconstruct them.
 
 Dashboard and KSB routes use SQLAlchemy subqueries with `func.sum` / `func.count` aggregations — see `routes/dashboard.py` and `routes/ksbs.py` for the pattern.
+
+## Code Review Standards (CodeRabbit)
+
+PRs are reviewed automatically by CodeRabbit. Follow these conventions to avoid common flags:
+
+### Security
+- **CSRF**: All POST forms must include `<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">`. `CSRFProtect` is already wired up in `app.py` via Flask-WTF.
+- **Server-side validation**: Validate all user-supplied numbers for `< 0` *and* `math.isfinite()` — HTML `min` attributes are client-side only.
+- **JS injection**: Never interpolate server values into JS string literals directly. Use Jinja's `{{ value|tojson }}` filter so values are properly JSON-encoded and escaped.
+- **CDN scripts**: Pin to a specific version (e.g. `chart.js@4.4.7`, not `@4`) and include a matching `integrity="sha384-..."` SRI hash plus `crossorigin="anonymous"`. Obtain the hash from the CDN's own integrity tool or by computing `sha384` of the file.
+
+### Templates
+- **URL generation**: Use `url_for('blueprint.view')` instead of hardcoded paths. Applies to form `action` attributes and `href` links for routes owned by this app.
+- **Null vs falsy checks**: Use `{% if value is not none %}` rather than `{% if value %}` when `0` is a valid state. Bare truthiness checks hide zero values and can cause division-by-zero in expressions that follow.
+
+### Python
+- **Docstrings**: Add a docstring to every new function/method. The configured coverage threshold is 80%; falling below it fails the pre-merge check.
+- **Decimal precision**: Use 1 decimal place (`round(x, 1)`, `"%.1f"`) consistently — this matches the existing UI convention throughout the app.
