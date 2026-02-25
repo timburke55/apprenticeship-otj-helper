@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ ksb.code }}: {{ ksb.title }}{% endblock %}
+{% block title %}{{ ksb.natural_code }}: {{ ksb.title }}{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -8,7 +8,7 @@
             {% if ksb.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
             {% elif ksb.category == 'skill' %}bg-skill-light text-skill-dark
             {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
-            {{ ksb.code }}
+            {{ ksb.natural_code }}
         </span>
         <h1 class="text-2xl font-bold text-gray-900">{{ ksb.title }}</h1>
     </div>
@@ -51,7 +51,7 @@
                         {% elif k.category == 'skill' %}bg-skill-light text-skill-dark
                         {% else %}bg-behaviour-light text-behaviour-dark{% endif %}
                         {% if k.code == ksb.code %}ring-2 ring-offset-1 {% if ksb.category == 'knowledge' %}ring-knowledge{% elif ksb.category == 'skill' %}ring-skill{% else %}ring-behaviour{% endif %}{% endif %}">
-                        {{ k.code }}
+                        {{ k.natural_code }}
                     </span>
                     {% endfor %}
                 </div>

@@ -15,7 +15,7 @@
             <select name="ksb" id="ksb" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 <option value="">All KSBs</option>
                 {% for ksb in all_ksbs %}
-                <option value="{{ ksb.code }}" {% if ksb_filter == ksb.code %}selected{% endif %}>{{ ksb.code }}: {{ ksb.title }}</option>
+                <option value="{{ ksb.code }}" {% if ksb_filter == ksb.code %}selected{% endif %}>{{ ksb.natural_code }}: {{ ksb.title }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -76,7 +76,7 @@
                             {% if ksb.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
                             {% elif ksb.category == 'skill' %}bg-skill-light text-skill-dark
                             {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
-                            {{ ksb.code }}
+                            {{ ksb.natural_code }}
                         </span>
                         {% endfor %}
                     </div>

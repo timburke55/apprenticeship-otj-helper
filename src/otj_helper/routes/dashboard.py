@@ -1,6 +1,6 @@
 """Dashboard route - overview of OTJ hours and KSB coverage."""
 
-from flask import Blueprint, g, render_template
+from flask import Blueprint, g, redirect, render_template, url_for
 from sqlalchemy import func
 
 from otj_helper.auth import login_required
@@ -9,10 +9,15 @@ from otj_helper.models import Activity, KSB, Tag, activity_ksbs, activity_tags, 
 bp = Blueprint("dashboard", __name__)
 
 
-@bp.route("/")
+@bp.route("/dashboard")
 @login_required
 def index():
+    # Redirect to landing if the user hasn't chosen a spec yet
+    if not g.user.selected_spec:
+        return redirect(url_for("landing.index"))
+
     uid = g.user.id
+    spec = g.user.selected_spec
 
     # Total hours
     total_hours = (
@@ -39,8 +44,7 @@ def index():
         .all()
     )
 
-    # KSB coverage: count and hours per KSB for this user only.
-    # Outer-join via Activity so KSBs with zero of this user's activities still appear.
+    # KSB coverage for the user's selected spec only
     ksb_coverage = (
         db.session.query(
             KSB.code,
@@ -57,6 +61,7 @@ def index():
                 0,
             ).label("total_hours"),
         )
+        .filter(KSB.spec_code == spec)
         .outerjoin(activity_ksbs, KSB.code == activity_ksbs.c.ksb_code)
         .outerjoin(
             Activity,

@@ -17,6 +17,7 @@ class User(db.Model):
     name = db.Column(db.String(255))
     google_sub = db.Column(db.String(255), unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    selected_spec = db.Column(db.String(20), nullable=True)  # e.g. 'ST0763'
 
     activities = db.relationship("Activity", backref="user", lazy="select")
 
@@ -32,10 +33,22 @@ activity_ksbs = db.Table(
 class KSB(db.Model):
     """Reference data for Knowledge, Skills and Behaviours."""
 
-    code = db.Column(db.String(4), primary_key=True)  # e.g. K1, S3, B2
+    code = db.Column(db.String(6), primary_key=True)  # e.g. K1, S3, B2, AK1, AS28
+    spec_code = db.Column(db.String(20), nullable=False, default="ST0787")  # e.g. ST0763
     category = db.Column(db.String(12), nullable=False)  # knowledge, skill, behaviour
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
+
+    @property
+    def natural_code(self):
+        """Return the standard-display code without the spec prefix character.
+
+        ST0787 codes have no prefix (K1 → K1).
+        ST0763 codes are prefixed with 'A' (AK1 → K1, AS28 → S28).
+        """
+        if len(self.code) >= 3 and self.code[0].isalpha() and self.code[1].isalpha():
+            return self.code[1:]
+        return self.code
 
 
 class Activity(db.Model):

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Knowledge, Skills & Behaviours</h1>
-    <p class="mt-1 text-sm text-gray-500">Systems Thinking Practitioner L7 (ST0787)</p>
+    <p class="mt-1 text-sm text-gray-500">{% if current_spec %}{{ current_spec.name }} ({{ current_spec.code }}){% endif %}</p>
 </div>
 
 {% macro ksb_table(items, color_class) %}
@@ -23,7 +23,7 @@
             <tr class="hover:bg-gray-50">
                 <td class="px-4 py-3">
                     <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-{{ color_class }}-light text-{{ color_class }}-dark">
-                        {{ ksb.code }}
+                        {{ ksb.natural_code }}
                     </span>
                 </td>
                 <td class="px-4 py-3">
@@ -38,12 +38,12 @@
 </div>
 {% endmacro %}
 
-<h2 class="text-lg font-semibold text-knowledge-dark mb-3">Knowledge (K1-K5)</h2>
+<h2 class="text-lg font-semibold text-knowledge-dark mb-3">Knowledge</h2>
 {{ ksb_table(knowledge, 'knowledge') }}
 
-<h2 class="text-lg font-semibold text-skill-dark mb-3">Skills (S1-S11)</h2>
+<h2 class="text-lg font-semibold text-skill-dark mb-3">Skills</h2>
 {{ ksb_table(skills, 'skill') }}
 
-<h2 class="text-lg font-semibold text-behaviour-dark mb-3">Behaviours (B1-B6)</h2>
+<h2 class="text-lg font-semibold text-behaviour-dark mb-3">Behaviours</h2>
 {{ ksb_table(behaviours, 'behaviour') }}
 {% endblock %}

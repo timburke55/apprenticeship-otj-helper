@@ -9,6 +9,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from otj_helper.models import KSB, db
 from otj_helper.ksb_data import KSBS
+from otj_helper.specs_data import SPECS_BY_CODE
 
 
 def create_app(test_config=None):
@@ -47,6 +48,7 @@ def create_app(test_config=None):
 
     # Register blueprints
     from otj_helper.routes.auth import bp as auth_bp, init_oauth
+    from otj_helper.routes.landing import bp as landing_bp
     from otj_helper.routes.dashboard import bp as dashboard_bp
     from otj_helper.routes.activities import bp as activities_bp
     from otj_helper.routes.ksbs import bp as ksbs_bp
@@ -54,6 +56,7 @@ def create_app(test_config=None):
 
     init_oauth(app)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(landing_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(activities_bp)
     app.register_blueprint(ksbs_bp)
@@ -67,7 +70,19 @@ def create_app(test_config=None):
 
     @app.context_processor
     def inject_user():
-        return {"current_user": g.get("user")}
+        user = g.get("user")
+        spec = SPECS_BY_CODE.get(user.selected_spec) if user and user.selected_spec else None
+
+        def natural_code(code: str) -> str:
+            """Strip the single-character spec prefix from a DB KSB code.
+
+            'AK1' → 'K1', 'AS28' → 'S28', 'K1' → 'K1' (unchanged).
+            """
+            if len(code) >= 3 and code[0].isalpha() and code[1].isalpha():
+                return code[1:]
+            return code
+
+        return {"current_user": user, "current_spec": spec, "natural_code": natural_code}
 
     return app
 
@@ -79,6 +94,8 @@ def _migrate_db():
         "ALTER TABLE activity ADD COLUMN user_id INTEGER REFERENCES app_user(id)",
         "CREATE TABLE IF NOT EXISTS tag (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(50) NOT NULL, user_id INTEGER NOT NULL REFERENCES app_user(id), UNIQUE(name, user_id))",
         "CREATE TABLE IF NOT EXISTS activity_tags (activity_id INTEGER NOT NULL REFERENCES activity(id), tag_id INTEGER NOT NULL REFERENCES tag(id), PRIMARY KEY (activity_id, tag_id))",
+        "ALTER TABLE ksb ADD COLUMN spec_code VARCHAR(20) NOT NULL DEFAULT 'ST0787'",
+        "ALTER TABLE app_user ADD COLUMN selected_spec VARCHAR(20)",
     ]
     for sql in migrations:
         try:
@@ -90,8 +107,17 @@ def _migrate_db():
 
 
 def _seed_ksbs():
-    """Insert KSB reference data if not already present."""
-    if KSB.query.count() == 0:
-        for item in KSBS:
+    """Insert KSB reference data if not already present.
+
+    Seeds are keyed by (spec_code, code) so that re-running on a database that
+    already has ST0787 records will still insert the new ST0763 records.
+    """
+    existing = {(k.spec_code, k.code) for k in KSB.query.all()}
+    added = False
+    for item in KSBS:
+        key = (item["spec_code"], item["code"])
+        if key not in existing:
             db.session.add(KSB(**item))
+            added = True
+    if added:
         db.session.commit()

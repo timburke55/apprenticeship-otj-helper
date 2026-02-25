@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}OTJ Tracker{% endblock %} - Systems Thinking Practitioner L7</title>
+    <title>{% block title %}OTJ Tracker{% endblock %}{% if current_spec %} — {{ current_spec.name }}{% endif %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -27,7 +27,7 @@
                     <div class="flex items-center">
                         <a href="/" class="text-white font-bold text-lg">OTJ Tracker</a>
                         <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="/" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
+                            <a href="/dashboard" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Dashboard</a>
                             <a href="/activities" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Activities</a>
                             <a href="/ksbs" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">KSBs</a>
                             <a href="/tags" class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white">Tags</a>
@@ -36,6 +36,9 @@
                     <div class="flex items-center gap-4">
                         <a href="/activities/new" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">+ Log Activity</a>
                         {% if current_user %}
+                        {% if current_spec %}
+                        <a href="/" class="hidden sm:block text-xs text-gray-400 hover:text-gray-200 border border-gray-600 rounded px-2 py-1">{{ current_spec.name }} L{{ current_spec.level }}</a>
+                        {% endif %}
                         <span class="text-sm text-gray-400">{{ current_user.name or current_user.email }}</span>
                         <a href="/auth/logout" class="text-sm text-gray-400 hover:text-white">Sign out</a>
                         {% endif %}

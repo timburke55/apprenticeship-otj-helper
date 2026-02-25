@@ -39,7 +39,8 @@ def list_activities():
         page=page, per_page=20, error_out=False
     )
 
-    all_ksbs = KSB.query.order_by(KSB.code).all()
+    spec = g.user.selected_spec or "ST0787"
+    all_ksbs = KSB.query.filter_by(spec_code=spec).order_by(KSB.code).all()
     user_tags = Tag.query.filter_by(user_id=g.user.id).order_by(Tag.name).all()
     return render_template(
         "activities/list.html",
@@ -59,7 +60,8 @@ def create():
     if request.method == "POST":
         return _save_activity(Activity())
 
-    all_ksbs = KSB.query.order_by(KSB.code).all()
+    spec = g.user.selected_spec or "ST0787"
+    all_ksbs = KSB.query.filter_by(spec_code=spec).order_by(KSB.code).all()
     user_tags = Tag.query.filter_by(user_id=g.user.id).order_by(Tag.name).all()
     return render_template(
         "activities/form.html",
@@ -88,7 +90,8 @@ def edit(activity_id):
     if request.method == "POST":
         return _save_activity(activity)
 
-    all_ksbs = KSB.query.order_by(KSB.code).all()
+    spec = g.user.selected_spec or "ST0787"
+    all_ksbs = KSB.query.filter_by(spec_code=spec).order_by(KSB.code).all()
     user_tags = Tag.query.filter_by(user_id=g.user.id).order_by(Tag.name).all()
     return render_template(
         "activities/form.html",
