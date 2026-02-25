@@ -32,6 +32,7 @@ def create_app(test_config=None):
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
     app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET")
+    app.config["DEV_AUTO_LOGIN_EMAIL"] = os.environ.get("DEV_AUTO_LOGIN_EMAIL")
 
     if test_config:
         app.config.update(test_config)
@@ -66,6 +67,17 @@ def create_app(test_config=None):
     def load_user():
         from otj_helper.models import User
         user_id = session.get("user_id")
+
+        dev_email = app.config.get("DEV_AUTO_LOGIN_EMAIL")
+        if dev_email and user_id is None:
+            user = User.query.filter_by(email=dev_email).first()
+            if not user:
+                user = User(email=dev_email, name="Dev User")
+                db.session.add(user)
+                db.session.commit()
+            session["user_id"] = user.id
+            user_id = user.id
+
         g.user = db.session.get(User, user_id) if user_id else None
 
     @app.context_processor
