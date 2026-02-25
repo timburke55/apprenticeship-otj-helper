@@ -54,6 +54,20 @@
 </div>
 {% endif %}
 
+{% if activity.tags %}
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 mb-3">Tags</h2>
+    <div class="flex flex-wrap gap-2">
+        {% for tag in activity.tags|sort(attribute='name') %}
+        <a href="/activities?tag={{ tag.id }}"
+            class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+            {{ tag.name }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- CORE Workflow -->
 {% set capture_links  = activity.resources | selectattr('workflow_stage', 'equalto', 'capture')  | list %}
 {% set organise_links = activity.resources | selectattr('workflow_stage', 'equalto', 'organise') | list %}

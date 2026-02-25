@@ -5,7 +5,7 @@ from datetime import date
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 from otj_helper.auth import login_required
-from otj_helper.models import Activity, KSB, ResourceLink, db
+from otj_helper.models import Activity, KSB, ResourceLink, Tag, db
 
 # Which source types are surfaced per CORE stage (first entry is the default)
 _STAGE_SOURCE_TYPES = {
@@ -24,6 +24,7 @@ def list_activities():
     page = request.args.get("page", 1, type=int)
     ksb_filter = request.args.get("ksb", None)
     type_filter = request.args.get("type", None)
+    tag_filter = request.args.get("tag", None)
 
     query = Activity.query.filter_by(user_id=g.user.id)
 
@@ -31,6 +32,8 @@ def list_activities():
         query = query.filter(Activity.ksbs.any(KSB.code == ksb_filter))
     if type_filter:
         query = query.filter(Activity.activity_type == type_filter)
+    if tag_filter:
+        query = query.filter(Activity.tags.any(Tag.id == tag_filter))
 
     activities = query.order_by(Activity.activity_date.desc()).paginate(
         page=page, per_page=20, error_out=False
@@ -38,6 +41,7 @@ def list_activities():
 
     spec = g.user.selected_spec or "ST0787"
     all_ksbs = KSB.query.filter_by(spec_code=spec).order_by(KSB.code).all()
+    user_tags = Tag.query.filter_by(user_id=g.user.id).order_by(Tag.name).all()
     return render_template(
         "activities/list.html",
         activities=activities,
@@ -45,6 +49,8 @@ def list_activities():
         activity_types=Activity.ACTIVITY_TYPES,
         ksb_filter=ksb_filter,
         type_filter=type_filter,
+        tag_filter=tag_filter,
+        user_tags=user_tags,
     )
 
 
@@ -56,6 +62,7 @@ def create():
 
     spec = g.user.selected_spec or "ST0787"
     all_ksbs = KSB.query.filter_by(spec_code=spec).order_by(KSB.code).all()
+    user_tags = Tag.query.filter_by(user_id=g.user.id).order_by(Tag.name).all()
     return render_template(
         "activities/form.html",
         activity=None,
@@ -64,6 +71,7 @@ def create():
         source_types=ResourceLink.SOURCE_TYPES,
         workflow_stages=ResourceLink.WORKFLOW_STAGES,
         stage_source_types=_STAGE_SOURCE_TYPES,
+        user_tags=user_tags,
     )
 
 
@@ -84,6 +92,7 @@ def edit(activity_id):
 
     spec = g.user.selected_spec or "ST0787"
     all_ksbs = KSB.query.filter_by(spec_code=spec).order_by(KSB.code).all()
+    user_tags = Tag.query.filter_by(user_id=g.user.id).order_by(Tag.name).all()
     return render_template(
         "activities/form.html",
         activity=activity,
@@ -92,6 +101,7 @@ def edit(activity_id):
         source_types=ResourceLink.SOURCE_TYPES,
         workflow_stages=ResourceLink.WORKFLOW_STAGES,
         stage_source_types=_STAGE_SOURCE_TYPES,
+        user_tags=user_tags,
     )
 
 
@@ -121,6 +131,18 @@ def _save_activity(activity):
     # Update KSBs
     selected_ksbs = request.form.getlist("ksbs")
     activity.ksbs = KSB.query.filter(KSB.code.in_(selected_ksbs)).all()
+
+    # Update tags — parse comma-separated input, create new tags as needed
+    raw_tags = request.form.get("tags", "")
+    tag_names = [t.strip().lower() for t in raw_tags.split(",") if t.strip()]
+    resolved_tags = []
+    for name in tag_names:
+        tag = Tag.query.filter_by(name=name, user_id=g.user.id).first()
+        if not tag:
+            tag = Tag(name=name, user_id=g.user.id)
+            db.session.add(tag)
+        resolved_tags.append(tag)
+    activity.tags = resolved_tags
 
     # Handle resource links — remove existing if editing
     if activity.id:

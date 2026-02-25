@@ -4,7 +4,7 @@ from flask import Blueprint, g, redirect, render_template, url_for
 from sqlalchemy import func
 
 from otj_helper.auth import login_required
-from otj_helper.models import Activity, KSB, activity_ksbs, db
+from otj_helper.models import Activity, KSB, Tag, activity_ksbs, activity_tags, db
 
 bp = Blueprint("dashboard", __name__)
 
@@ -74,6 +74,18 @@ def index():
 
     activity_count = Activity.query.filter_by(user_id=uid).count()
 
+    # Top tags by activity count for this user
+    top_tags = (
+        db.session.query(Tag, func.count(activity_tags.c.activity_id).label("count"))
+        .join(activity_tags, Tag.id == activity_tags.c.tag_id)
+        .join(Activity, Activity.id == activity_tags.c.activity_id)
+        .filter(Activity.user_id == uid)
+        .group_by(Tag.id)
+        .order_by(func.count(activity_tags.c.activity_id).desc())
+        .limit(15)
+        .all()
+    )
+
     return render_template(
         "dashboard.html",
         total_hours=total_hours,
@@ -81,4 +93,5 @@ def index():
         recent=recent,
         ksb_coverage=ksb_coverage,
         activity_count=activity_count,
+        top_tags=top_tags,
     )

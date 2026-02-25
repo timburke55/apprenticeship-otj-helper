@@ -28,8 +28,19 @@
                 {% endfor %}
             </select>
         </div>
+        {% if user_tags %}
+        <div>
+            <label for="tag" class="block text-xs font-medium text-gray-700">Tag</label>
+            <select name="tag" id="tag" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">All Tags</option>
+                {% for tag in user_tags %}
+                <option value="{{ tag.id }}" {% if tag_filter == tag.id|string %}selected{% endif %}>{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
         <button type="submit" class="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">Filter</button>
-        {% if ksb_filter or type_filter %}
+        {% if ksb_filter or type_filter or tag_filter %}
         <a href="/activities" class="text-sm text-gray-500 hover:text-gray-700">Clear</a>
         {% endif %}
     </form>
@@ -45,6 +56,7 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">KSBs</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tags</th>
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Links</th>
             </tr>
         </thead>
@@ -69,6 +81,16 @@
                         {% endfor %}
                     </div>
                 </td>
+                <td class="px-4 py-3">
+                    <div class="flex flex-wrap gap-1">
+                        {% for tag in activity.tags|sort(attribute='name') %}
+                        <a href="/activities?tag={{ tag.id }}"
+                            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+                            {{ tag.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </td>
                 <td class="px-4 py-3 text-sm text-gray-500">
                     {% if activity.resources %}
                     <span class="text-xs">{{ activity.resources|length }} link{{ 's' if activity.resources|length > 1 }}</span>
@@ -84,11 +106,11 @@
 {% if activities.pages > 1 %}
 <div class="flex justify-center mt-6 gap-2">
     {% if activities.has_prev %}
-    <a href="?page={{ activities.prev_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">Previous</a>
+    <a href="?page={{ activities.prev_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if tag_filter %}&tag={{ tag_filter }}{% endif %}" class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">Previous</a>
     {% endif %}
     <span class="rounded-md bg-white px-3 py-2 text-sm text-gray-500">Page {{ activities.page }} of {{ activities.pages }}</span>
     {% if activities.has_next %}
-    <a href="?page={{ activities.next_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">Next</a>
+    <a href="?page={{ activities.next_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if tag_filter %}&tag={{ tag_filter }}{% endif %}" class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">Next</a>
     {% endif %}
 </div>
 {% endif %}

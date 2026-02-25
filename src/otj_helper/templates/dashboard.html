@@ -89,6 +89,25 @@
     </div>
 </div>
 
+<!-- Tag cloud -->
+{% if top_tags %}
+<div class="bg-white shadow rounded-lg p-6 mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-medium text-gray-900">Tags</h2>
+        <a href="/tags" class="text-sm text-indigo-600 hover:text-indigo-500">Manage tags</a>
+    </div>
+    <div class="flex flex-wrap gap-2">
+        {% for tag, count in top_tags %}
+        <a href="/activities?tag={{ tag.id }}"
+            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+            {{ tag.name }}
+            <span class="text-xs text-indigo-400">{{ count }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Recent activities -->
 <div class="bg-white shadow rounded-lg p-6">
     <div class="flex justify-between items-center mb-4">
