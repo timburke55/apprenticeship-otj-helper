@@ -41,6 +41,17 @@ def test_root_redirects_logged_in_user_without_spec(client):
     assert resp.status_code in (200, 302)
 
 
+def test_root_skips_landing_for_user_with_spec(_with_spec, client):
+    """Logged-in user with a spec set is redirected straight to the dashboard.
+
+    Visiting / should never show the spec-selection landing page to a user
+    who has already picked their apprenticeship standard.
+    """
+    resp = client.get("/", follow_redirects=False)
+    assert resp.status_code == 302
+    assert "/dashboard" in resp.headers["Location"]
+
+
 def test_dashboard_requires_spec(client):
     """Dashboard redirects to landing when user has no spec."""
     resp = client.get("/dashboard", follow_redirects=False)
