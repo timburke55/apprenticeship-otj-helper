@@ -59,6 +59,38 @@ The activity form (`templates/activities/form.html`) dynamically handles a varia
 
 Dashboard and KSB routes use SQLAlchemy subqueries with `func.sum` / `func.count` aggregations — see `routes/dashboard.py` and `routes/ksbs.py` for the pattern.
 
+## Generative AI Guardrails (JGA Policy Compliance)
+
+This app tracks off-the-job training evidence for apprenticeships delivered by JGA Group. JGA's Generative AI Strategy (QA-18) and the broader UK apprenticeship assessment framework place strict limits on how AI may be used. **Any feature that involves LLM or generative AI integration must comply with the rules below.**
+
+Reference: [JGA AI Strategy (QA-18)](https://www.jga-group.com/wp-content/uploads/QA-18-JGA_AI_Strategy_v2_0824.pdf) · [JGA AI guidance for apprentices](https://www.jga-group.com/apprentice-zone/support/artificial-intelligence/)
+
+### What AI must NEVER do in this app
+
+- **Write, draft, or suggest evidence text** — portfolio evidence, reflective accounts, descriptions, or any narrative the apprentice would submit as their own work. This includes "suggest and edit" flows where the LLM produces a first draft.
+- **Write or draft assessment answers** — professional discussion prep, project proposals, presentations, or any content assessed by an End-Point Assessment Organisation.
+- **Auto-complete or ghost-write** activity descriptions, notes, or reflections — even as optional suggestions the user can accept/edit.
+- **Generate or fabricate activity data** — titles, dates, durations, or resource links that did not actually occur.
+- **Summarise or paraphrase the apprentice's own writing** into a "better" version — rewriting undermines authentic voice and is indistinguishable from generation.
+
+### What AI may do
+
+- **Identify which KSBs an activity might address** — suggest KSB codes with brief justifications, for the apprentice to accept or dismiss (see Extension 01).
+- **Analyse coverage gaps** — highlight under-evidenced KSBs, stale evidence, or missing activity types (see Extension 11).
+- **Classify or tag** — suggest activity types or tags based on a title, without generating prose.
+- **Search and retrieve** — help the apprentice find their own existing activities or resources.
+
+### Design rules for any AI feature
+
+1. **Human-in-the-loop**: Every AI suggestion must be a candidate the apprentice explicitly accepts or dismisses. Nothing is auto-applied.
+2. **No generated prose in the portfolio**: If an LLM produces natural-language output, it must be clearly auxiliary (e.g. a one-sentence justification for a KSB match) and must never be saved as part of the apprentice's evidence record.
+3. **Transparency**: Where AI is used, the UI must make this obvious (e.g. a distinct "AI Suggestions" panel). AI output must not be silently blended into the apprentice's own content.
+4. **Bring Your Own Key**: The app must never ship with or require a centrally-funded API key. Users configure their own provider and key via settings.
+
+### When proposing new features
+
+Before designing or implementing any feature that involves an LLM, generative AI, or automated text production, check it against the rules above. If a proposed feature would produce text that an apprentice could submit as their own evidence, **do not build it** — suggest an alternative that keeps the apprentice as the author. When in doubt, the test is: *"Could this output end up in the apprentice's portfolio or EPA submission as if they wrote it?"* If yes, it violates the policy.
+
 ## Code Review Standards (CodeRabbit)
 
 PRs are reviewed automatically by CodeRabbit. Follow these conventions to avoid common flags:
