@@ -94,99 +94,28 @@ function applyTemplate() {
                 </select>
                 <p class="mt-1 text-xs text-gray-500">How complete is the evidence for this activity?</p>
             </div>
-        </div>
-    </div>
 
-    <!-- KSB selection -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">KSBs Covered</h2>
-        <p class="text-sm text-gray-500 mb-4">Select which Knowledge, Skills or Behaviours this activity relates to.</p>
-
-        {% if activity and activity.id %}
-            {% set selected_codes = activity.ksbs|map(attribute='code')|list %}
-        {% else %}
-            {% set _raw_ksbs = request.args.get('tmpl_ksbs', '') %}
-            {% set selected_codes = _raw_ksbs.split(',') | select | list if _raw_ksbs else [] %}
-        {% endif %}
-
-        <div class="space-y-4">
-            <div>
-                <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {% for ksb in all_ksbs if ksb.category == 'knowledge' %}
-                    <label class="relative flex items-start p-2 rounded-md hover:bg-knowledge-light/30 cursor-pointer">
-                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
-                            {% if ksb.code in selected_codes %}checked{% endif %}
-                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-knowledge focus:ring-knowledge">
-                        <span class="ml-2">
-                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
-                        </span>
-                    </label>
+            <div class="sm:col-span-2 border-t border-gray-100 pt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Attachments</label>
+                <p class="text-xs text-gray-500 mb-2">Upload files as evidence — images, PDFs, or documents. Max 10 MB each.</p>
+                {% if activity and activity.id and activity.attachments %}
+                <div class="mb-3 space-y-1">
+                    {% for att in activity.attachments %}
+                    <div class="flex items-center gap-2 text-sm">
+                        <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></svg>
+                        <a href="{{ url_for('uploads.serve_file', attachment_id=att.id) }}" target="_blank"
+                           class="text-indigo-600 hover:underline truncate">{{ att.filename }}</a>
+                        <span class="text-gray-400 flex-shrink-0">{{ "%.1f"|format(att.file_size / 1024) }} KB</span>
+                    </div>
                     {% endfor %}
+                    <p class="text-xs text-gray-400 mt-1">To delete attachments, use the activity detail page.</p>
                 </div>
-            </div>
-
-            <div>
-                <h3 class="text-sm font-semibold text-skill-dark mb-2">Skills</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {% for ksb in all_ksbs if ksb.category == 'skill' %}
-                    <label class="relative flex items-start p-2 rounded-md hover:bg-skill-light/30 cursor-pointer">
-                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
-                            {% if ksb.code in selected_codes %}checked{% endif %}
-                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-skill focus:ring-skill">
-                        <span class="ml-2">
-                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
-                        </span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-sm font-semibold text-behaviour-dark mb-2">Behaviours</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {% for ksb in all_ksbs if ksb.category == 'behaviour' %}
-                    <label class="relative flex items-start p-2 rounded-md hover:bg-behaviour-light/30 cursor-pointer">
-                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
-                            {% if ksb.code in selected_codes %}checked{% endif %}
-                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-behaviour focus:ring-behaviour">
-                        <span class="ml-2">
-                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
-                        </span>
-                    </label>
-                    {% endfor %}
-                </div>
+                {% endif %}
+                <input type="file" name="files" multiple
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.md"
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
         </div>
-    </div>
-
-    <!-- Tags -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-1">Tags</h2>
-        <p class="text-sm text-gray-500 mb-3">Add freeform labels to categorise this activity (e.g. <em>systems thinking, root cause analysis, agile</em>). Separate multiple tags with commas. New tags are created automatically.</p>
-        <input type="text" name="tags" id="tags"
-            value="{% if activity and activity.id %}{{ activity.tags|map(attribute='name')|join(', ') }}{% else %}{{ request.args.get('tmpl_tags', '') }}{% endif %}"
-            placeholder="e.g. systems thinking, soft systems methodology"
-            list="existing-tags"
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-        {% if user_tags %}
-        <datalist id="existing-tags">
-            {% for tag in user_tags %}
-            <option value="{{ tag.name }}">
-            {% endfor %}
-        </datalist>
-        {% endif %}
-        {% if user_tags %}
-        <div class="mt-2 flex flex-wrap gap-1">
-            {% for tag in user_tags %}
-            <button type="button"
-                onclick="toggleTag('{{ tag.name }}')"
-                class="tag-suggestion inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 cursor-pointer">
-                {{ tag.name }}
-            </button>
-            {% endfor %}
-        </div>
-        {% endif %}
     </div>
 
     <!-- CORE Workflow Links -->
@@ -383,26 +312,96 @@ function applyTemplate() {
         </div>
     </div>
 
-    <!-- Attachments -->
+    <!-- KSB selection -->
     <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-1">Attachments</h2>
-        <p class="text-sm text-gray-500 mb-3">Upload files as evidence — images, PDFs, or documents. Max 10 MB each.</p>
-        {% if activity and activity.id and activity.attachments %}
-        <div class="mb-4 space-y-1">
-            {% for att in activity.attachments %}
-            <div class="flex items-center gap-2 text-sm">
-                <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></svg>
-                <a href="{{ url_for('uploads.serve_file', attachment_id=att.id) }}" target="_blank"
-                   class="text-indigo-600 hover:underline truncate">{{ att.filename }}</a>
-                <span class="text-gray-400 flex-shrink-0">{{ "%.1f"|format(att.file_size / 1024) }} KB</span>
+        <h2 class="text-lg font-medium text-gray-900 mb-4">KSBs Covered</h2>
+        <p class="text-sm text-gray-500 mb-4">Select which Knowledge, Skills or Behaviours this activity relates to.</p>
+
+        {% if activity and activity.id %}
+            {% set selected_codes = activity.ksbs|map(attribute='code')|list %}
+        {% else %}
+            {% set _raw_ksbs = request.args.get('tmpl_ksbs', '') %}
+            {% set selected_codes = _raw_ksbs.split(',') | select | list if _raw_ksbs else [] %}
+        {% endif %}
+
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'knowledge' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-knowledge-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-knowledge focus:ring-knowledge">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
             </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-skill-dark mb-2">Skills</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'skill' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-skill-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-skill focus:ring-skill">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-behaviour-dark mb-2">Behaviours</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'behaviour' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-behaviour-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-behaviour focus:ring-behaviour">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-1">Tags</h2>
+        <p class="text-sm text-gray-500 mb-3">Add freeform labels to categorise this activity (e.g. <em>systems thinking, root cause analysis, agile</em>). Separate multiple tags with commas. New tags are created automatically.</p>
+        <input type="text" name="tags" id="tags"
+            value="{% if activity and activity.id %}{{ activity.tags|map(attribute='name')|join(', ') }}{% else %}{{ request.args.get('tmpl_tags', '') }}{% endif %}"
+            placeholder="e.g. systems thinking, soft systems methodology"
+            list="existing-tags"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+        {% if user_tags %}
+        <datalist id="existing-tags">
+            {% for tag in user_tags %}
+            <option value="{{ tag.name }}">
             {% endfor %}
-            <p class="text-xs text-gray-400 mt-1">To delete attachments, use the activity detail page.</p>
+        </datalist>
+        {% endif %}
+        {% if user_tags %}
+        <div class="mt-2 flex flex-wrap gap-1">
+            {% for tag in user_tags %}
+            <button type="button"
+                onclick="toggleTag('{{ tag.name }}')"
+                class="tag-suggestion inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 cursor-pointer">
+                {{ tag.name }}
+            </button>
+            {% endfor %}
         </div>
         {% endif %}
-        <input type="file" name="files" multiple
-            accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.md"
-            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
     </div>
 
     <!-- Submit -->
