@@ -108,7 +108,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                {% for gap in ksb_gaps|sort(attribute='severity', reverse=True) %}
+                {% for gap in ksb_gaps|sort(attribute='severity_rank', reverse=True) %}
                 <tr class="{% if gap.severity == 'critical' %}bg-red-50 dark:bg-red-900/10{% endif %}">
                     <td class="py-2 pr-4 font-mono font-semibold">
                         <a href="{{ url_for('ksbs.detail', code=gap.ksb.code) }}"
@@ -141,21 +141,9 @@
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Activity Type Diversity</h2>
     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">A varied portfolio demonstrates breadth of learning. Greyed-out types haven't been used yet.</p>
-    {% set all_types = [
-        ('training_course', 'Training Course'),
-        ('self_study', 'Self-Study'),
-        ('mentoring', 'Mentoring'),
-        ('shadowing', 'Shadowing'),
-        ('workshop', 'Workshop'),
-        ('conference', 'Conference / Event'),
-        ('project_work', 'Project Work'),
-        ('research', 'Research'),
-        ('writing', 'Writing / Reflection'),
-        ('other', 'Other'),
-    ] %}
     {% set unused_type_ids = type_gaps | map(attribute='type') | list %}
     <div class="flex flex-wrap gap-3">
-        {% for type_id, label in all_types %}
+        {% for type_id, label in activity_types %}
         {% if type_id in unused_type_ids %}
         <a href="{{ url_for('activities.create') }}"
             class="inline-flex items-center gap-1.5 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 px-3 py-2 text-sm text-gray-400 dark:text-gray-500 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400">
@@ -178,12 +166,7 @@
     <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Ensure resources are linked across all four CORE stages for a complete evidence trail.</p>
     {% set unused_stages = workflow_gaps | map(attribute='stage') | list %}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {% for stage_id, label, desc, _ in [
-            ('capture', 'Capture', 'Initial notes and ideas', ''),
-            ('organise', 'Organise', 'Structured tasks and planning', ''),
-            ('review', 'Review', 'Synthesis documents and diagrams', ''),
-            ('engage', 'Engage', 'Final outputs and evidence', ''),
-        ] %}
+        {% for stage_id, label, desc, _ in workflow_stages %}
         {% if stage_id in unused_stages %}
         <div class="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 p-4 text-center">
             <p class="text-sm font-medium text-gray-400 dark:text-gray-500">{{ label }}</p>

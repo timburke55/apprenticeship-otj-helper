@@ -3,6 +3,8 @@
 from collections import defaultdict
 from datetime import date, timedelta
 
+from sqlalchemy.orm import selectinload
+
 from otj_helper.models import Activity, KSB, ResourceLink
 
 
@@ -23,8 +25,13 @@ def analyse_gaps(user_id: int, spec_code: str) -> dict:
     # All KSBs for this spec
     all_ksbs = KSB.query.filter_by(spec_code=spec_code).order_by(KSB.code).all()
 
-    # All activities for this user
-    activities = Activity.query.filter_by(user_id=user_id).all()
+    # All activities for this user — eager-load relationships to avoid N+1 queries
+    activities = (
+        Activity.query
+        .filter_by(user_id=user_id)
+        .options(selectinload(Activity.ksbs), selectinload(Activity.resources))
+        .all()
+    )
 
     # Hours per KSB
     ksb_hours: dict[str, float] = defaultdict(float)
@@ -48,12 +55,12 @@ def analyse_gaps(user_id: int, spec_code: str) -> dict:
         if hours == 0:
             ksb_gaps.append({
                 "ksb": k, "hours": 0, "count": 0,
-                "severity": "critical", "reason": "No evidence at all",
+                "severity": "critical", "severity_rank": 2, "reason": "No evidence at all",
             })
         elif hours < 2.0:
             ksb_gaps.append({
                 "ksb": k, "hours": round(hours, 1), "count": count,
-                "severity": "warning", "reason": f"Only {hours:.1f}h logged",
+                "severity": "warning", "severity_rank": 1, "reason": f"Only {hours:.1f}h logged",
             })
 
     # --- Activity Type Gaps ---
@@ -111,7 +118,7 @@ def analyse_gaps(user_id: int, spec_code: str) -> dict:
     )
     coverage_pct = (covered / total_ksbs * 100) if total_ksbs else 0
     quality_pct = (good_quality / total_ksbs * 100) if total_ksbs else 0
-    overall_score = round((coverage_pct * 0.6 + quality_pct * 0.4), 0)
+    overall_score = round((coverage_pct * 0.6 + quality_pct * 0.4), 1)
 
     # --- Actionable Suggestions ---
     suggestions = []
@@ -143,7 +150,7 @@ def analyse_gaps(user_id: int, spec_code: str) -> dict:
         "staleness": staleness,
         "quality_gaps": quality_gaps,
         "overall_score": overall_score,
-        "coverage_pct": round(coverage_pct, 0),
-        "quality_pct": round(quality_pct, 0),
+        "coverage_pct": round(coverage_pct, 1),
+        "quality_pct": round(quality_pct, 1),
         "suggestions": suggestions,
     }
