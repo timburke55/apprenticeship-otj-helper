@@ -83,6 +83,7 @@ def create_app(test_config=None):
     from otj_helper.routes.health import bp as health_bp
     from otj_helper.routes.templates import bp as templates_bp
     from otj_helper.routes.uploads import bp as uploads_bp
+    from otj_helper.routes.events import bp as events_bp
 
     init_oauth(app)
     app.register_blueprint(auth_bp)
@@ -94,6 +95,7 @@ def create_app(test_config=None):
     app.register_blueprint(health_bp)
     app.register_blueprint(templates_bp)
     app.register_blueprint(uploads_bp)
+    app.register_blueprint(events_bp)
 
     @app.before_request
     def load_user():
