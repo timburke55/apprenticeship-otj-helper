@@ -25,6 +25,7 @@ def upload(activity_id):
         return redirect(url_for("activities.detail", activity_id=activity_id))
 
     saved = 0
+    stored_names: list[str] = []
     for file in files:
         if not file.filename:
             continue
@@ -51,6 +52,7 @@ def upload(activity_id):
 
         safe_name = secure_filename(file.filename)
         stored_name, has_thumb = storage.save_file(file, content_type)
+        stored_names.append(stored_name)
 
         att = Attachment(
             activity_id=activity.id,
@@ -64,8 +66,14 @@ def upload(activity_id):
         saved += 1
 
     if saved:
-        db.session.commit()
-        flash(f"{saved} file(s) uploaded.", "success")
+        try:
+            db.session.commit()
+            flash(f"{saved} file(s) uploaded.", "success")
+        except Exception:
+            db.session.rollback()
+            for sn in stored_names:
+                storage.delete_file(sn)
+            flash("Upload failed — please try again.", "error")
 
     return redirect(url_for("activities.detail", activity_id=activity_id))
 
@@ -104,9 +112,10 @@ def delete_attachment(attachment_id):
     """Delete an attachment and its file from storage."""
     att = _get_attachment_or_404(attachment_id)
     activity_id = att.activity_id
-    storage.delete_file(att.stored_name)
+    stored_name = att.stored_name
     db.session.delete(att)
     db.session.commit()
+    storage.delete_file(stored_name)
     flash("Attachment deleted.", "info")
     return redirect(url_for("activities.detail", activity_id=activity_id))
 
