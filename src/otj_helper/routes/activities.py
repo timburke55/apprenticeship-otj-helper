@@ -2,9 +2,12 @@
 
 import csv
 import io
+import logging
 import math
 from datetime import date
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
@@ -195,7 +198,10 @@ def delete(activity_id):
     db.session.commit()
 
     from otj_helper import sse
-    sse.publish(g.user.id, "activity_deleted", {"id": activity_id})
+    try:
+        sse.publish(g.user.id, "activity_deleted", {"id": activity_id})
+    except Exception:
+        logger.exception("SSE publish failed for activity_deleted id=%s", activity_id)
 
     flash("Activity deleted.", "info")
     return redirect(url_for("activities.list_activities"))
@@ -372,13 +378,16 @@ def _save_activity(activity):
     db.session.commit()
 
     from otj_helper import sse
-    sse.publish(g.user.id, "activity_saved", {
-        "id": activity.id,
-        "title": activity.title,
-        "duration_hours": round(activity.duration_hours, 1),
-        "activity_date": activity.activity_date.isoformat(),
-        "ksbs": [k.natural_code for k in activity.ksbs],
-    })
+    try:
+        sse.publish(g.user.id, "activity_saved", {
+            "id": activity.id,
+            "title": activity.title,
+            "duration_hours": round(activity.duration_hours, 1),
+            "activity_date": activity.activity_date.isoformat(),
+            "ksbs": [k.natural_code for k in activity.ksbs],
+        })
+    except Exception:
+        logger.exception("SSE publish failed for activity_saved id=%s", activity.id)
 
     flash("Activity saved.", "success")
 

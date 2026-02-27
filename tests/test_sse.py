@@ -24,3 +24,4 @@ def test_stream_endpoint_returns_event_stream(_with_spec, client):
     """GET /events/stream returns text/event-stream content type."""
     resp = client.get("/events/stream")
     assert resp.content_type.startswith("text/event-stream")
+    resp.close()

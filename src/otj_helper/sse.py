@@ -47,3 +47,5 @@ def publish(user_id: int, event_type: str, data: dict):
                 dead.append(q)
         for q in dead:
             clients.remove(q)
+        if not clients:
+            _subscribers.pop(user_id, None)

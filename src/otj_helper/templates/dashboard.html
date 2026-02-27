@@ -407,7 +407,7 @@
 (function () {
     if (typeof EventSource === 'undefined') return;
 
-    const evtSource = new EventSource('/events/stream');
+    const evtSource = new EventSource({{ url_for('events.stream')|tojson }});
 
     evtSource.addEventListener('activity_saved', function (e) {
         showUpdateBanner('Activity updated — refreshing...');
