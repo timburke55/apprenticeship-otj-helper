@@ -7,6 +7,7 @@ from pathlib import Path
 from flask import Flask, g, session
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from otj_helper.ksb_data import KSBS
@@ -232,11 +233,37 @@ def _migrate_db() -> list[bool]:
     return results
 
 
+def _is_unique_constraint_error(exc: Exception) -> bool:
+    """Return True if *exc* is a unique-constraint violation.
+
+    Detection strategy (most-to-least reliable):
+    1. SQLAlchemy IntegrityError + SQLSTATE/PGCODE '23505' (PostgreSQL unique
+       violation) via the underlying driver's ``orig`` attribute — resilient
+       across psycopg2, psycopg3, and asyncpg.
+    2. Message-based fallback covering SQLite ('unique constraint failed') and
+       any driver that doesn't expose a structured error code.
+    """
+    if not isinstance(exc, IntegrityError):
+        return False
+    orig = getattr(exc, "orig", None)
+    if orig is not None:
+        code = getattr(orig, "pgcode", None) or getattr(orig, "sqlstate", None)
+        if code is not None:
+            return code == "23505"
+    # Fallback: inspect the string representation for known phrases.
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("unique constraint failed", "unique violation", "duplicate key value"))
+
+
 def _seed_ksbs():
     """Insert KSB reference data if not already present.
 
     Seeds are keyed by (spec_code, code) so that re-running on a database that
     already has ST0787 records will still insert the new ST0763 records.
+
+    The commit is wrapped in a try/except so that a concurrent worker that
+    already committed the same rows (raising a UNIQUE constraint error) is
+    treated as a no-op rather than a fatal startup failure.
     """
     existing = {(k.spec_code, k.code) for k in KSB.query.all()}
     added = False
@@ -246,4 +273,13 @@ def _seed_ksbs():
             db.session.add(KSB(**item))
             added = True
     if added:
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            if _is_unique_constraint_error(exc):
+                logger.debug(
+                    "KSB seed skipped (concurrent worker already seeded): %s", exc
+                )
+            else:
+                raise
