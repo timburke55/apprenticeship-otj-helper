@@ -7,7 +7,10 @@
         crossorigin="anonymous"></script>
 
 <div class="mb-8">
-    <h1 class="text-2xl font-bold text-gray-900">OTJ Training Dashboard</h1>
+    <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold text-gray-900">OTJ Training Dashboard</h1>
+        <span id="sse-status" class="inline-flex h-2 w-2 rounded-full bg-gray-300" title="Real-time updates"></span>
+    </div>
     <p class="mt-1 text-sm text-gray-500">{% if current_spec %}{{ current_spec.name }} L{{ current_spec.level }}{% endif %} — Off-the-Job Training Tracker</p>
 </div>
 
@@ -398,6 +401,49 @@
         [{% for code, cat, title, count, hours in b_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
         'rgba(245, 158, 11, 0.75)', 'rgba(209, 213, 219, 0.8)'
     );
+})();
+
+// Real-time updates via SSE
+(function () {
+    if (typeof EventSource === 'undefined') return;
+
+    const evtSource = new EventSource('/events/stream');
+
+    evtSource.addEventListener('activity_saved', function (e) {
+        showUpdateBanner('Activity updated — refreshing...');
+        setTimeout(function () { window.location.reload(); }, 1500);
+    });
+
+    evtSource.addEventListener('activity_deleted', function (e) {
+        showUpdateBanner('Activity deleted — refreshing...');
+        setTimeout(function () { window.location.reload(); }, 1500);
+    });
+
+    evtSource.onerror = function () {
+        var dot = document.getElementById('sse-status');
+        if (dot) {
+            dot.className = 'inline-flex h-2 w-2 rounded-full bg-red-400';
+            dot.title = 'Disconnected — reconnecting...';
+        }
+    };
+
+    evtSource.onopen = function () {
+        var dot = document.getElementById('sse-status');
+        if (dot) {
+            dot.className = 'inline-flex h-2 w-2 rounded-full bg-green-400';
+            dot.title = 'Connected — real-time updates active';
+        }
+    };
+
+    function showUpdateBanner(text) {
+        var existing = document.getElementById('sse-banner');
+        if (existing) existing.remove();
+        var banner = document.createElement('div');
+        banner.id = 'sse-banner';
+        banner.className = 'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2';
+        banner.innerHTML = '<div class="rounded-md p-3 bg-indigo-50 text-indigo-700 text-sm font-medium">' + text + '</div>';
+        document.querySelector('main').prepend(banner);
+    }
 })();
 </script>
 {% endblock %}

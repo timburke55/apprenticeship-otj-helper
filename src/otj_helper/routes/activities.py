@@ -193,6 +193,10 @@ def delete(activity_id):
         storage.delete_file(att.stored_name)
     db.session.delete(activity)
     db.session.commit()
+
+    from otj_helper import sse
+    sse.publish(g.user.id, "activity_deleted", {"id": activity_id})
+
     flash("Activity deleted.", "info")
     return redirect(url_for("activities.list_activities"))
 
@@ -366,6 +370,16 @@ def _save_activity(activity):
         db.session.add(activity)
 
     db.session.commit()
+
+    from otj_helper import sse
+    sse.publish(g.user.id, "activity_saved", {
+        "id": activity.id,
+        "title": activity.title,
+        "duration_hours": round(activity.duration_hours, 1),
+        "activity_date": activity.activity_date.isoformat(),
+        "ksbs": [k.natural_code for k in activity.ksbs],
+    })
+
     flash("Activity saved.", "success")
 
     # --- File uploads (optional) ---
