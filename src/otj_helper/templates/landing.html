@@ -1,12 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-50">
+<html lang="en" class="h-full bg-gray-50 dark:bg-gray-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OTJ Tracker — Choose your apprenticeship</title>
+    <script>
+    (function () {
+        var stored = localStorage.getItem('theme');
+        if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -33,16 +42,41 @@
                     {% else %}
                     <a href="{{ url_for('auth.login') }}" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Sign in</a>
                     {% endif %}
+                    <!-- Dark mode toggle -->
+                    <button id="dark-mode-toggle" type="button"
+                        class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none"
+                        aria-label="Toggle dark mode">
+                        <svg id="dm-icon-sun" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0z" />
+                        </svg>
+                        <svg id="dm-icon-moon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998z" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
+    <script>
+    (function () {
+        function updateDarkIcons(isDark) {
+            document.getElementById('dm-icon-sun').classList.toggle('hidden', !isDark);
+            document.getElementById('dm-icon-moon').classList.toggle('hidden', isDark);
+        }
+        updateDarkIcons(document.documentElement.classList.contains('dark'));
+        document.getElementById('dark-mode-toggle').addEventListener('click', function () {
+            var isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateDarkIcons(isDark);
+        });
+    })();
+    </script>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 mt-4">
         {% for category, message in messages %}
-        <div class="rounded-md p-4 mb-2 {% if category == 'success' %}bg-green-50 text-green-800{% elif category == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+        <div class="rounded-md p-4 mb-2 {% if category == 'success' %}bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300{% elif category == 'error' %}bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-300{% else %}bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300{% endif %}">
             {{ message }}
         </div>
         {% endfor %}
@@ -63,27 +97,27 @@
 
     {# Spec selection #}
     <main class="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 py-12">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Choose your apprenticeship standard</h2>
-        <p class="text-sm text-gray-500 mb-8">
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Choose your apprenticeship standard</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">
             Select the standard you are working towards. Your KSB framework and dashboard will be
             tailored to it.
         </p>
 
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {% for spec in specs %}
-            <div class="relative bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+            <div class="relative bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow flex flex-col">
 
                 {# Level badge #}
                 <div class="px-6 pt-6 pb-4 flex-1">
                     <div class="flex items-start justify-between mb-3">
-                        <span class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                        <span class="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                             Level {{ spec.level }}
                         </span>
-                        <span class="text-xs text-gray-400 font-mono">{{ spec.code }}</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 font-mono">{{ spec.code }}</span>
                     </div>
 
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2 leading-snug">{{ spec.name }}</h3>
-                    <p class="text-sm text-gray-600 leading-relaxed">{{ spec.description }}</p>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 leading-snug">{{ spec.name }}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{{ spec.description }}</p>
                 </div>
 
                 {# Action footer #}
@@ -92,7 +126,7 @@
                         {% if current_user %}
                         <a href="{{ url_for('landing.select_spec', spec=spec.code) }}"
                            class="block w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-indigo-500 transition-colors
-                                  {% if current_user.selected_spec == spec.code %}ring-2 ring-indigo-600 ring-offset-2{% endif %}">
+                                  {% if current_user.selected_spec == spec.code %}ring-2 ring-indigo-600 ring-offset-2 dark:ring-offset-gray-800{% endif %}">
                             {% if current_user.selected_spec == spec.code %}
                                 Current standard
                             {% else %}
@@ -106,7 +140,7 @@
                         </a>
                         {% endif %}
                     {% else %}
-                    <span class="block w-full rounded-lg bg-gray-100 px-4 py-2.5 text-center text-sm font-semibold text-gray-400 cursor-not-allowed">
+                    <span class="block w-full rounded-lg bg-gray-100 dark:bg-gray-700 px-4 py-2.5 text-center text-sm font-semibold text-gray-400 dark:text-gray-500 cursor-not-allowed">
                         Coming soon
                     </span>
                     {% endif %}
@@ -116,26 +150,26 @@
         </div>
 
         {# KSB key legend #}
-        <div class="mt-12 pt-8 border-t border-gray-200">
-            <p class="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">KSB categories</p>
+        <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium uppercase tracking-wide">KSB categories</p>
             <div class="flex flex-wrap gap-4 text-sm">
                 <span class="flex items-center gap-1.5">
                     <span class="inline-block h-3 w-3 rounded-full bg-knowledge"></span>
-                    <span class="text-gray-600">Knowledge</span>
+                    <span class="text-gray-600 dark:text-gray-400">Knowledge</span>
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="inline-block h-3 w-3 rounded-full bg-skill"></span>
-                    <span class="text-gray-600">Skills</span>
+                    <span class="text-gray-600 dark:text-gray-400">Skills</span>
                 </span>
                 <span class="flex items-center gap-1.5">
                     <span class="inline-block h-3 w-3 rounded-full bg-behaviour"></span>
-                    <span class="text-gray-600">Behaviours</span>
+                    <span class="text-gray-600 dark:text-gray-400">Behaviours</span>
                 </span>
             </div>
         </div>
     </main>
 
-    <footer class="border-t border-gray-200 py-6 text-center text-xs text-gray-400">
+    <footer class="border-t border-gray-200 dark:border-gray-700 py-6 text-center text-xs text-gray-400 dark:text-gray-500">
         OTJ Tracker — KSB data sourced from the Institute for Apprenticeships and Technical Education
     </footer>
 

@@ -8,65 +8,65 @@
 
 <div class="mb-8">
     <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold text-gray-900">OTJ Training Dashboard</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">OTJ Training Dashboard</h1>
         <span id="sse-status" class="inline-flex h-2 w-2 rounded-full bg-gray-300" title="Real-time updates"></span>
     </div>
-    <p class="mt-1 text-sm text-gray-500">{% if current_spec %}{{ current_spec.name }} L{{ current_spec.level }}{% endif %} — Off-the-Job Training Tracker</p>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{% if current_spec %}{{ current_spec.name }} L{{ current_spec.level }}{% endif %} — Off-the-Job Training Tracker</p>
 </div>
 
 <!-- Summary cards -->
 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">Total OTJ Hours</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ "%.1f"|format(total_hours) }}</dd>
+    <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">Total OTJ Hours</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ "%.1f"|format(total_hours) }}</dd>
         {% if otj_target_hours is not none and otj_target_hours > 0 %}
         <div class="mt-2">
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                 <span>Target: {{ "%.0f"|format(otj_target_hours) }}h</span>
                 <span>{{ "%.0f"|format([total_hours / otj_target_hours * 100, 100]|min) }}%</span>
             </div>
-            <div class="bg-gray-200 rounded-full h-1.5">
+            <div class="bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
                 <div class="bg-indigo-600 rounded-full h-1.5" style="width: {{ [total_hours / otj_target_hours * 100, 100]|min }}%"></div>
             </div>
         </div>
         {% endif %}
     </div>
-    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">This Week</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ "%.1f"|format(this_week_hours) }}h</dd>
+    <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">This Week</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ "%.1f"|format(this_week_hours) }}h</dd>
         {% if weekly_target_hours is not none and weekly_target_hours > 0 %}
         <div class="mt-2">
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                 <span>Target: {{ "%.1f"|format(weekly_target_hours) }}h</span>
                 {% set remaining = weekly_target_hours - this_week_hours %}
                 {% if remaining > 0 %}
-                <span class="text-amber-600">{{ "%.1f"|format(remaining) }}h remaining</span>
+                <span class="text-amber-600 dark:text-amber-400">{{ "%.1f"|format(remaining) }}h remaining</span>
                 {% else %}
-                <span class="text-emerald-600">Target met</span>
+                <span class="text-emerald-600 dark:text-emerald-400">Target met</span>
                 {% endif %}
             </div>
-            <div class="bg-gray-200 rounded-full h-1.5">
+            <div class="bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
                 <div class="rounded-full h-1.5 {% if this_week_hours >= weekly_target_hours %}bg-emerald-500{% else %}bg-amber-500{% endif %}"
                     style="width: {{ [this_week_hours / weekly_target_hours * 100, 100]|min }}%"></div>
             </div>
         </div>
         {% else %}
-        <p class="mt-1 text-xs text-gray-400">Set a weekly target below</p>
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Set a weekly target below</p>
         {% endif %}
     </div>
-    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">Activities Logged</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ activity_count }}</dd>
+    <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">Activities Logged</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ activity_count }}</dd>
     </div>
-    <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">KSBs Covered</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ ksb_coverage|selectattr('4', 'greaterthan', 0)|list|length }} / {{ ksb_coverage|length }}</dd>
+    <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">KSBs Covered</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ ksb_coverage|selectattr('4', 'greaterthan', 0)|list|length }} / {{ ksb_coverage|length }}</dd>
     </div>
 </div>
 
 <!-- Weekly hours chart -->
-<div class="bg-white shadow rounded-lg p-6 mb-8">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">Hours per Week (last 12 weeks)</h2>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Hours per Week (last 12 weeks)</h2>
     <div style="position: relative; height: 200px;">
         <canvas id="weeklyChart"></canvas>
     </div>
@@ -76,55 +76,55 @@
 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-8">
 
     <!-- Seminar vs total OTJ -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Seminar &amp; Structured Learning</h2>
-        <p class="text-xs text-gray-500 mb-4">Counts Training Course and Workshop activities as seminar time.</p>
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Seminar &amp; Structured Learning</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Counts Training Course and Workshop activities as seminar time.</p>
         <div style="position: relative; height: 200px;">
             <canvas id="seminarChart"></canvas>
         </div>
         {% if seminar_target_hours is not none and seminar_target_hours > 0 %}
         <div class="mt-4">
-            <div class="flex justify-between text-xs text-gray-500 mb-1">
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                 <span>Seminar target: {{ "%.0f"|format(seminar_target_hours) }}h</span>
                 <span>{{ "%.0f"|format([seminar_hours / seminar_target_hours * 100, 100]|min) }}%</span>
             </div>
-            <div class="bg-gray-200 rounded-full h-2">
+            <div class="bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                 <div class="bg-emerald-500 rounded-full h-2" style="width: {{ [seminar_hours / seminar_target_hours * 100, 100]|min }}%"></div>
             </div>
-            <p class="text-xs text-gray-500 mt-1">{{ "%.1f"|format(seminar_hours) }}h logged of {{ "%.0f"|format(seminar_target_hours) }}h target</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ "%.1f"|format(seminar_hours) }}h logged of {{ "%.0f"|format(seminar_target_hours) }}h target</p>
         </div>
         {% endif %}
     </div>
 
     <!-- Hours targets settings -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-1">Hours Targets</h2>
-        <p class="text-xs text-gray-500 mb-4">Set your total OTJ and seminar hour targets for the apprenticeship.</p>
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Hours Targets</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Set your total OTJ and seminar hour targets for the apprenticeship.</p>
         <form method="POST" action="{{ url_for('dashboard.index') }}" class="space-y-4">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div>
-                <label for="otj_target_hours" class="block text-sm font-medium text-gray-700">Total OTJ target (hours)</label>
+                <label for="otj_target_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Total OTJ target (hours)</label>
                 <input type="number" id="otj_target_hours" name="otj_target_hours" min="0" step="0.5"
                     value="{{ "%.1f"|format(otj_target_hours) if otj_target_hours is not none else '' }}"
                     placeholder="e.g. 460"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
-                <p class="mt-1 text-xs text-gray-400">Typically 20% of total contracted hours (e.g. 37.5h/wk × 24 months ≈ 390–460h)</p>
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400">
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Typically 20% of total contracted hours (e.g. 37.5h/wk × 24 months ≈ 390–460h)</p>
             </div>
             <div>
-                <label for="seminar_target_hours" class="block text-sm font-medium text-gray-700">Seminar time target (hours)</label>
+                <label for="seminar_target_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Seminar time target (hours)</label>
                 <input type="number" id="seminar_target_hours" name="seminar_target_hours" min="0" step="0.5"
                     value="{{ "%.1f"|format(seminar_target_hours) if seminar_target_hours is not none else '' }}"
                     placeholder="e.g. 120"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
-                <p class="mt-1 text-xs text-gray-400">Expected hours from Training Course &amp; Workshop activities with your provider</p>
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400">
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Expected hours from Training Course &amp; Workshop activities with your provider</p>
             </div>
             <div>
-                <label for="weekly_target_hours" class="block text-sm font-medium text-gray-700">Weekly OTJ target (hours)</label>
+                <label for="weekly_target_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Weekly OTJ target (hours)</label>
                 <input type="number" id="weekly_target_hours" name="weekly_target_hours" min="0" step="0.5"
                     value="{{ "%.1f"|format(weekly_target_hours) if weekly_target_hours is not none else '' }}"
                     placeholder="e.g. 7.5"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2">
-                <p class="mt-1 text-xs text-gray-400">Target OTJ hours per week — shows remaining hours on the dashboard</p>
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border px-3 py-2 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400">
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Target OTJ hours per week — shows remaining hours on the dashboard</p>
             </div>
             <button type="submit"
                 class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none">
@@ -135,9 +135,9 @@
 </div>
 
 <!-- KSB Coverage chart -->
-<div class="bg-white shadow rounded-lg p-6 mb-8">
-    <h2 class="text-lg font-medium text-gray-900 mb-1">KSB Progress</h2>
-    <p class="text-xs text-gray-500 mb-4">Hours logged per KSB. Grey bars have no evidence yet — focus here.</p>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-1">KSB Progress</h2>
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Hours logged per KSB. Grey bars have no evidence yet — focus here.</p>
     {% set k_items = ksb_coverage|selectattr('1', 'equalto', 'knowledge')|list %}
     {% set s_items = ksb_coverage|selectattr('1', 'equalto', 'skill')|list %}
     {% set b_items = ksb_coverage|selectattr('1', 'equalto', 'behaviour')|list %}
@@ -168,15 +168,15 @@
 </div>
 
 <!-- KSB Coverage pill grid (quick overview) -->
-<div class="bg-white shadow rounded-lg p-6 mb-8">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">KSB Coverage Map</h2>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">KSB Coverage Map</h2>
     <div class="space-y-4">
         <div>
             <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
             <div class="flex flex-wrap gap-2">
                 {% for code, category, title, count, hours in ksb_coverage if category == 'knowledge' %}
                 <a href="{{ url_for('ksbs.detail', code=code) }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
-                    {% if count > 0 %}bg-knowledge-light text-knowledge-dark{% else %}bg-gray-100 text-gray-400{% endif %}
+                    {% if count > 0 %}bg-knowledge-light text-knowledge-dark{% else %}bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500{% endif %}
                     hover:ring-2 hover:ring-knowledge">
                     {{ natural_code(code) }}
                     {% if count > 0 %}<span class="ml-1.5 text-xs">({{ "%.1f"|format(hours) }}h)</span>{% endif %}
@@ -189,7 +189,7 @@
             <div class="flex flex-wrap gap-2">
                 {% for code, category, title, count, hours in ksb_coverage if category == 'skill' %}
                 <a href="{{ url_for('ksbs.detail', code=code) }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
-                    {% if count > 0 %}bg-skill-light text-skill-dark{% else %}bg-gray-100 text-gray-400{% endif %}
+                    {% if count > 0 %}bg-skill-light text-skill-dark{% else %}bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500{% endif %}
                     hover:ring-2 hover:ring-skill">
                     {{ natural_code(code) }}
                     {% if count > 0 %}<span class="ml-1.5 text-xs">({{ "%.1f"|format(hours) }}h)</span>{% endif %}
@@ -202,7 +202,7 @@
             <div class="flex flex-wrap gap-2">
                 {% for code, category, title, count, hours in ksb_coverage if category == 'behaviour' %}
                 <a href="{{ url_for('ksbs.detail', code=code) }}" class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium
-                    {% if count > 0 %}bg-behaviour-light text-behaviour-dark{% else %}bg-gray-100 text-gray-400{% endif %}
+                    {% if count > 0 %}bg-behaviour-light text-behaviour-dark{% else %}bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500{% endif %}
                     hover:ring-2 hover:ring-behaviour">
                     {{ natural_code(code) }}
                     {% if count > 0 %}<span class="ml-1.5 text-xs">({{ "%.1f"|format(hours) }}h)</span>{% endif %}
@@ -215,17 +215,17 @@
 
 <!-- Tag cloud -->
 {% if top_tags %}
-<div class="bg-white shadow rounded-lg p-6 mb-8">
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
     <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-medium text-gray-900">Tags</h2>
-        <a href="{{ url_for('tags.list_tags') }}" class="text-sm text-indigo-600 hover:text-indigo-500">Manage tags</a>
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Tags</h2>
+        <a href="{{ url_for('tags.list_tags') }}" class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Manage tags</a>
     </div>
     <div class="flex flex-wrap gap-2">
         {% for tag, count in top_tags %}
         <a href="{{ url_for('activities.list_activities', tag=tag.id) }}"
-            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50">
             {{ tag.name }}
-            <span class="text-xs text-indigo-400">{{ count }}</span>
+            <span class="text-xs text-indigo-400 dark:text-indigo-500">{{ count }}</span>
         </a>
         {% endfor %}
     </div>
@@ -233,19 +233,19 @@
 {% endif %}
 
 <!-- Recent activities -->
-<div class="bg-white shadow rounded-lg p-6">
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
     <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-medium text-gray-900">Recent Activities</h2>
-        <a href="{{ url_for('activities.list_activities') }}" class="text-sm text-indigo-600 hover:text-indigo-500">View all</a>
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Recent Activities</h2>
+        <a href="{{ url_for('activities.list_activities') }}" class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">View all</a>
     </div>
     {% if recent %}
-    <div class="divide-y divide-gray-100">
+    <div class="divide-y divide-gray-100 dark:divide-gray-700">
         {% for activity in recent %}
         <div class="py-3">
             <div class="flex justify-between items-start">
                 <div>
-                    <a href="{{ url_for('activities.detail', activity_id=activity.id) }}" class="text-sm font-medium text-gray-900 hover:text-indigo-600">{{ activity.title }}</a>
-                    <p class="text-xs text-gray-500 mt-0.5">{{ activity.activity_date.strftime('%d %b %Y') }} &middot; {{ "%.1f"|format(activity.duration_hours) }}h</p>
+                    <a href="{{ url_for('activities.detail', activity_id=activity.id) }}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400">{{ activity.title }}</a>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ activity.activity_date.strftime('%d %b %Y') }} &middot; {{ "%.1f"|format(activity.duration_hours) }}h</p>
                 </div>
                 <div class="flex gap-1">
                     {% for ksb in activity.ksbs %}
@@ -262,12 +262,16 @@
         {% endfor %}
     </div>
     {% else %}
-    <p class="text-sm text-gray-500 py-4 text-center">No activities logged yet. <a href="{{ url_for('activities.create') }}" class="text-indigo-600 hover:text-indigo-500">Log your first activity</a>.</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">No activities logged yet. <a href="{{ url_for('activities.create') }}" class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Log your first activity</a>.</p>
     {% endif %}
 </div>
 
 <script>
 (function () {
+    var isDark = document.documentElement.classList.contains('dark');
+    var tickColor = isDark ? '#9ca3af' : '#6b7280';
+    var gridColor = isDark ? '#374151' : '#e5e7eb';
+
     // ── Weekly hours bar chart ──────────────────────────────────────────────
     const weeklyData = {{ weekly_chart_data|tojson }};
     new Chart(document.getElementById('weeklyChart'), {
@@ -297,7 +301,12 @@
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => v + 'h' }
+                    ticks: { callback: v => v + 'h', color: tickColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: tickColor },
+                    grid: { color: gridColor }
                 }
             }
         }
@@ -327,7 +336,7 @@
             maintainAspectRatio: false,
             cutout: '60%',
             plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                legend: { position: 'bottom', labels: { boxWidth: 12, color: tickColor } },
                 tooltip: {
                     callbacks: {
                         label: ctx => {
@@ -377,9 +386,10 @@
                 scales: {
                     x: {
                         beginAtZero: true,
-                        ticks: { callback: v => v + 'h' }
+                        ticks: { callback: v => v + 'h', color: tickColor },
+                        grid: { color: gridColor }
                     },
-                    y: { ticks: { font: { size: 11 } } }
+                    y: { ticks: { font: { size: 11 }, color: tickColor }, grid: { color: gridColor } }
                 }
             }
         });
@@ -389,17 +399,19 @@
     {% set s_items = ksb_coverage|selectattr('1', 'equalto', 'skill')|list %}
     {% set b_items = ksb_coverage|selectattr('1', 'equalto', 'behaviour')|list %}
 
+    var zeroColor = isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.8)';
+
     makeKsbChart('ksbChartK',
         [{% for code, cat, title, count, hours in k_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
-        'rgba(59, 130, 246, 0.75)', 'rgba(209, 213, 219, 0.8)'
+        'rgba(59, 130, 246, 0.75)', zeroColor
     );
     makeKsbChart('ksbChartS',
         [{% for code, cat, title, count, hours in s_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
-        'rgba(34, 197, 94, 0.75)', 'rgba(209, 213, 219, 0.8)'
+        'rgba(34, 197, 94, 0.75)', zeroColor
     );
     makeKsbChart('ksbChartB',
         [{% for code, cat, title, count, hours in b_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
-        'rgba(245, 158, 11, 0.75)', 'rgba(209, 213, 219, 0.8)'
+        'rgba(245, 158, 11, 0.75)', zeroColor
     );
 })();
 
@@ -441,7 +453,7 @@
         var banner = document.createElement('div');
         banner.id = 'sse-banner';
         banner.className = 'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-2';
-        banner.innerHTML = '<div class="rounded-md p-3 bg-indigo-50 text-indigo-700 text-sm font-medium">' + text + '</div>';
+        banner.innerHTML = '<div class="rounded-md p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm font-medium">' + text + '</div>';
         document.querySelector('main').prepend(banner);
     }
 })();

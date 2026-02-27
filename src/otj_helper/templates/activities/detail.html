@@ -5,8 +5,8 @@
 <div class="mb-6">
     <div class="sm:flex sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ activity.title }}</h1>
-            <p class="mt-1 text-sm text-gray-500">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ activity.title }}</h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {{ activity.activity_date.strftime('%d %B %Y') }}
                 &middot; {{ "%.1f"|format(activity.duration_hours) }} hours
                 &middot; {{ dict(activity.ACTIVITY_TYPES).get(activity.activity_type, activity.activity_type) }}
@@ -14,18 +14,18 @@
         </div>
         <div class="mt-3 sm:mt-0 flex gap-2">
             <a href="{{ url_for('templates.create_from_activity', activity_id=activity.id) }}"
-                class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
                 Save as Template
             </a>
             <a href="{{ url_for('activities.edit', activity_id=activity.id) }}"
-                class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
                 Edit
             </a>
             <form method="post" action="{{ url_for('activities.delete', activity_id=activity.id) }}" class="inline"
                 onsubmit="return confirm('Delete this activity?')">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit"
-                    class="rounded-md bg-white px-3 py-2 text-sm font-medium text-red-600 shadow-sm ring-1 ring-inset ring-red-200 hover:bg-red-50">
+                    class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 shadow-sm ring-1 ring-inset ring-red-200 dark:ring-red-800 hover:bg-red-50 dark:hover:bg-red-900/20">
                     Delete
                 </button>
             </form>
@@ -34,21 +34,21 @@
 </div>
 
 <!-- Activity Details -->
-<div class="bg-white shadow rounded-lg p-6 mb-6">
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
     {% if activity.description %}
     <div class="mb-5">
-        <h2 class="text-sm font-medium text-gray-500 mb-2">Description</h2>
-        <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ activity.description }}</p>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Description</h2>
+        <p class="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{{ activity.description }}</p>
     </div>
     {% endif %}
 
-    <div{% if activity.description %} class="border-t border-gray-100 pt-5"{% endif %}>
-        <h2 class="text-sm font-medium text-gray-500 mb-3">Attachments</h2>
+    <div{% if activity.description %} class="border-t border-gray-100 dark:border-gray-700 pt-5"{% endif %}>
+        <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Attachments</h2>
 
         {% if activity.attachments %}
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             {% for att in activity.attachments %}
-            <div class="border rounded-lg p-2 text-center">
+            <div class="border dark:border-gray-700 rounded-lg p-2 text-center">
                 {% if att.has_thumbnail %}
                 <a href="{{ url_for('uploads.serve_file', attachment_id=att.id) }}" target="_blank" rel="noopener noreferrer">
                     <img src="{{ url_for('uploads.serve_thumb', attachment_id=att.id) }}"
@@ -60,8 +60,8 @@
                     <span class="text-2xl">&#128196;</span>
                 </a>
                 {% endif %}
-                <p class="text-xs text-gray-500 truncate mt-1">{{ att.filename }}</p>
-                <p class="text-xs text-gray-400">{{ (att.file_size / 1024)|round(0)|int }} KB</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{{ att.filename }}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500">{{ (att.file_size / 1024)|round(0)|int }} KB</p>
                 <form method="post" action="{{ url_for('uploads.delete_attachment', attachment_id=att.id) }}"
                     class="mt-1" onsubmit="return confirm('Delete this file?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -76,7 +76,7 @@
             enctype="multipart/form-data" class="flex items-center gap-3">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" name="files" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.md"
-                class="text-sm text-gray-500">
+                class="text-sm text-gray-500 dark:text-gray-400">
             <button type="submit"
                 class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
                 Upload
@@ -91,8 +91,8 @@
 {% set review_links   = activity.resources | selectattr('workflow_stage', 'equalto', 'review')   | list %}
 {% set engage_links   = activity.resources | selectattr('workflow_stage', 'equalto', 'engage')   | list %}
 
-<div class="bg-white shadow rounded-lg p-6 mb-6">
-    <h2 class="text-sm font-medium text-gray-500 mb-4">CORE Workflow</h2>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">CORE Workflow</h2>
 
     <!-- Pipeline indicator -->
     <div class="flex items-center gap-1 mb-6 overflow-x-auto">
@@ -111,7 +111,7 @@
                         {% if color == 'blue'    %}bg-blue-200    text-blue-800   {% endif %}
                         {% if color == 'violet'  %}bg-violet-200  text-violet-800 {% endif %}
                         {% if color == 'emerald' %}bg-emerald-200 text-emerald-800{% endif %}
-                    {% else %}bg-gray-100 text-gray-400{% endif %}">
+                    {% else %}bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500{% endif %}">
                     {{ letter }}
                 </span>
                 <span class="text-xs mt-1
@@ -120,13 +120,13 @@
                         {% if color == 'blue'    %}text-blue-700   {% endif %}
                         {% if color == 'violet'  %}text-violet-700 {% endif %}
                         {% if color == 'emerald' %}text-emerald-700{% endif %}
-                    {% else %}text-gray-400{% endif %}">
+                    {% else %}text-gray-400 dark:text-gray-500{% endif %}">
                     {{ label }}
                     {% if links %}<span class="font-medium">({{ links|length }})</span>{% endif %}
                 </span>
             </div>
             {% if not loop.last %}
-            <svg class="w-5 h-5 text-gray-300 flex-shrink-0 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-5 h-5 text-gray-300 dark:text-gray-600 flex-shrink-0 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
             {% endif %}
@@ -141,17 +141,17 @@
         <div>
             <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-200 text-amber-800 text-xs font-bold">C</span>
-                <h3 class="text-sm font-semibold text-amber-900">Capture</h3>
-                <span class="text-xs text-amber-600">Google Keep and initial notes</span>
+                <h3 class="text-sm font-semibold text-amber-900 dark:text-amber-300">Capture</h3>
+                <span class="text-xs text-amber-600 dark:text-amber-400">Google Keep and initial notes</span>
             </div>
-            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 rounded-lg border border-amber-100 overflow-hidden">
+            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-amber-100 dark:border-amber-800 overflow-hidden">
                 {% for resource in capture_links %}
-                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-amber-50/40">
+                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-amber-50/40 dark:bg-amber-900/10">
                     <div class="min-w-0 flex-1">
                         <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"
-                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 break-words">{{ resource.title }}</a>
+                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 break-words">{{ resource.title }}</a>
                         {% if resource.description %}
-                        <p class="text-xs text-gray-500">{{ resource.description }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ resource.description }}</p>
                         {% endif %}
                     </div>
                     <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 flex-shrink-0">
@@ -167,17 +167,17 @@
         <div>
             <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-200 text-blue-800 text-xs font-bold">O</span>
-                <h3 class="text-sm font-semibold text-blue-900">Organise</h3>
-                <span class="text-xs text-blue-600">Google Tasks and structured planning</span>
+                <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-300">Organise</h3>
+                <span class="text-xs text-blue-600 dark:text-blue-400">Google Tasks and structured planning</span>
             </div>
-            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 rounded-lg border border-blue-100 overflow-hidden">
+            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-blue-100 dark:border-blue-800 overflow-hidden">
                 {% for resource in organise_links %}
-                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-blue-50/40">
+                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-blue-50/40 dark:bg-blue-900/10">
                     <div class="min-w-0 flex-1">
                         <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"
-                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 break-words">{{ resource.title }}</a>
+                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 break-words">{{ resource.title }}</a>
                         {% if resource.description %}
-                        <p class="text-xs text-gray-500">{{ resource.description }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ resource.description }}</p>
                         {% endif %}
                     </div>
                     <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 flex-shrink-0">
@@ -193,17 +193,17 @@
         <div>
             <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-violet-200 text-violet-800 text-xs font-bold">R</span>
-                <h3 class="text-sm font-semibold text-violet-900">Review</h3>
-                <span class="text-xs text-violet-600">Documents, diagrams, and markdown</span>
+                <h3 class="text-sm font-semibold text-violet-900 dark:text-violet-300">Review</h3>
+                <span class="text-xs text-violet-600 dark:text-violet-400">Documents, diagrams, and markdown</span>
             </div>
-            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 rounded-lg border border-violet-100 overflow-hidden">
+            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-violet-100 dark:border-violet-800 overflow-hidden">
                 {% for resource in review_links %}
-                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-violet-50/40">
+                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-violet-50/40 dark:bg-violet-900/10">
                     <div class="min-w-0 flex-1">
                         <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"
-                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 break-words">{{ resource.title }}</a>
+                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 break-words">{{ resource.title }}</a>
                         {% if resource.description %}
-                        <p class="text-xs text-gray-500">{{ resource.description }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ resource.description }}</p>
                         {% endif %}
                     </div>
                     <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 flex-shrink-0">
@@ -219,17 +219,17 @@
         <div>
             <div class="flex items-center gap-2 mb-2">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold">E</span>
-                <h3 class="text-sm font-semibold text-emerald-900">Engage</h3>
-                <span class="text-xs text-emerald-600">Final outputs and evidence</span>
+                <h3 class="text-sm font-semibold text-emerald-900 dark:text-emerald-300">Engage</h3>
+                <span class="text-xs text-emerald-600 dark:text-emerald-400">Final outputs and evidence</span>
             </div>
-            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 rounded-lg border border-emerald-100 overflow-hidden">
+            <div class="ml-4 sm:ml-8 divide-y divide-gray-100 dark:divide-gray-700 rounded-lg border border-emerald-100 dark:border-emerald-800 overflow-hidden">
                 {% for resource in engage_links %}
-                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-emerald-50/40">
+                <div class="flex flex-wrap items-start justify-between gap-2 px-3 py-2 bg-emerald-50/40 dark:bg-emerald-900/10">
                     <div class="min-w-0 flex-1">
                         <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"
-                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 break-words">{{ resource.title }}</a>
+                            class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 break-words">{{ resource.title }}</a>
                         {% if resource.description %}
-                        <p class="text-xs text-gray-500">{{ resource.description }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ resource.description }}</p>
                         {% endif %}
                     </div>
                     <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 flex-shrink-0">
@@ -242,25 +242,25 @@
         {% endif %}
 
         {% if not activity.resources %}
-        <p class="text-sm text-gray-400 text-center py-2">No workflow links added yet. <a href="{{ url_for('activities.edit', activity_id=activity.id) }}" class="text-indigo-600 hover:text-indigo-500">Edit</a> to add them.</p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-2">No workflow links added yet. <a href="{{ url_for('activities.edit', activity_id=activity.id) }}" class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</a> to add them.</p>
         {% endif %}
 
     </div>
 </div>
 
 {% if activity.ksbs %}
-<div class="bg-white shadow rounded-lg p-6 mb-6">
-    <h2 class="text-sm font-medium text-gray-500 mb-3">KSBs Covered</h2>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">KSBs Covered</h2>
     <div class="space-y-2">
         {% for ksb in activity.ksbs|sort(attribute='code') %}
-        <a href="{{ url_for('ksbs.detail', code=ksb.code) }}" class="block p-2 rounded-md hover:bg-gray-50">
+        <a href="{{ url_for('ksbs.detail', code=ksb.code) }}" class="block p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
             <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium mr-2
                 {% if ksb.category == 'knowledge' %}bg-knowledge-light text-knowledge-dark
                 {% elif ksb.category == 'skill' %}bg-skill-light text-skill-dark
                 {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
                 {{ ksb.natural_code }}
             </span>
-            <span class="text-sm text-gray-900">{{ ksb.title }}</span>
+            <span class="text-sm text-gray-900 dark:text-gray-100">{{ ksb.title }}</span>
         </a>
         {% endfor %}
     </div>
@@ -268,12 +268,12 @@
 {% endif %}
 
 {% if activity.tags %}
-<div class="bg-white shadow rounded-lg p-6 mb-6">
-    <h2 class="text-sm font-medium text-gray-500 mb-3">Tags</h2>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Tags</h2>
     <div class="flex flex-wrap gap-2">
         {% for tag in activity.tags|sort(attribute='name') %}
         <a href="{{ url_for('activities.list_activities', tag=tag.id) }}"
-            class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+            class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50">
             {{ tag.name }}
         </a>
         {% endfor %}
@@ -282,13 +282,13 @@
 {% endif %}
 
 {% if activity.notes %}
-<div class="bg-white shadow rounded-lg p-6 mb-6">
-    <h2 class="text-sm font-medium text-gray-500 mb-2">Notes</h2>
-    <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ activity.notes }}</p>
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</h2>
+    <p class="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{{ activity.notes }}</p>
 </div>
 {% endif %}
 
-<div class="text-sm text-gray-400">
+<div class="text-sm text-gray-400 dark:text-gray-500">
     Created {{ activity.created_at.strftime('%d %b %Y %H:%M') }}
     {% if activity.updated_at and activity.updated_at != activity.created_at %}
     &middot; Updated {{ activity.updated_at.strftime('%d %b %Y %H:%M') }}

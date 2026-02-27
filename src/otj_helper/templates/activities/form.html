@@ -3,15 +3,15 @@
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">{{ 'Edit' if activity and activity.id else 'Log New' }} Activity</h1>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ 'Edit' if activity and activity.id else 'Log New' }} Activity</h1>
 </div>
 
 {% if user_templates and (not activity or not activity.id) %}
-<div class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-    <p class="text-sm font-medium text-gray-700 mb-2">Start from a template</p>
+<div class="mb-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg p-4">
+    <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start from a template</p>
     <div class="flex gap-2">
         <select id="template-select"
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             <option value="">— select a template —</option>
             {% for tmpl in user_templates %}
             <option value="{{ url_for('templates.use_template', template_id=tmpl.id) }}">{{ tmpl.name }}</option>
@@ -33,37 +33,37 @@ function applyTemplate() {
 
 <form method="post" enctype="multipart/form-data" class="space-y-6">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="bg-white shadow rounded-lg p-6 space-y-4">
-        <h2 class="text-lg font-medium text-gray-900">Activity Details</h2>
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-4">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Activity Details</h2>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="sm:col-span-2">
-                <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
                 <input type="text" name="title" id="title" required
                     value="{{ activity.title if activity else '' }}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                     placeholder="e.g. SSM workshop on organisational boundary analysis">
             </div>
 
             <div>
-                <label for="activity_date" class="block text-sm font-medium text-gray-700">Date</label>
+                <label for="activity_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
                 <input type="date" name="activity_date" id="activity_date" required
                     value="{{ activity.activity_date.isoformat() if activity and activity.activity_date else '' }}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white">
             </div>
 
             <div>
-                <label for="duration_hours" class="block text-sm font-medium text-gray-700">Duration (hours)</label>
+                <label for="duration_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Duration (hours)</label>
                 <input type="number" name="duration_hours" id="duration_hours" required step="0.25" min="0.25"
                     value="{{ activity.duration_hours if activity and activity.duration_hours is not none else '' }}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                     placeholder="e.g. 2.5">
             </div>
 
             <div>
-                <label for="activity_type" class="block text-sm font-medium text-gray-700">Activity Type</label>
+                <label for="activity_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Activity Type</label>
                 <select name="activity_type" id="activity_type"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                     {% for value, label in activity_types %}
                     <option value="{{ value }}" {% if activity and activity.activity_type == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -71,57 +71,57 @@ function applyTemplate() {
             </div>
 
             <div class="sm:col-span-2">
-                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                 <textarea name="description" id="description" rows="3"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                     placeholder="What did you learn or do?">{{ activity.description if activity else '' }}</textarea>
             </div>
 
             <div class="sm:col-span-2">
-                <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
                 <textarea name="notes" id="notes" rows="2"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                     placeholder="Any additional notes or reflections">{{ activity.notes if activity else '' }}</textarea>
             </div>
 
             <div>
-                <label for="evidence_quality" class="block text-sm font-medium text-gray-700">Evidence Quality</label>
+                <label for="evidence_quality" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Evidence Quality</label>
                 <select name="evidence_quality" id="evidence_quality"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white">
                     {% for value, label in evidence_quality_options %}
                     <option value="{{ value }}" {% if (activity and (activity.evidence_quality or 'draft') == value) or (not activity and value == 'draft') %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
-                <p class="mt-1 text-xs text-gray-500">How complete is the evidence for this activity?</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">How complete is the evidence for this activity?</p>
             </div>
 
-            <div class="sm:col-span-2 border-t border-gray-100 pt-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Attachments</label>
-                <p class="text-xs text-gray-500 mb-2">Upload files as evidence — images, PDFs, or documents. Max 10 MB each.</p>
+            <div class="sm:col-span-2 border-t border-gray-100 dark:border-gray-700 pt-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attachments</label>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Upload files as evidence — images, PDFs, or documents. Max 10 MB each.</p>
                 {% if activity and activity.id and activity.attachments %}
                 <div class="mb-3 space-y-1">
                     {% for att in activity.attachments %}
                     <div class="flex items-center gap-2 text-sm">
-                        <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></svg>
+                        <svg class="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></svg>
                         <a href="{{ url_for('uploads.serve_file', attachment_id=att.id) }}" target="_blank" rel="noopener noreferrer"
-                           class="text-indigo-600 hover:underline truncate">{{ att.filename }}</a>
-                        <span class="text-gray-400 flex-shrink-0">{{ "%.1f"|format(att.file_size / 1024) }} KB</span>
+                           class="text-indigo-600 hover:underline truncate dark:text-indigo-400">{{ att.filename }}</a>
+                        <span class="text-gray-400 dark:text-gray-500 flex-shrink-0">{{ "%.1f"|format(att.file_size / 1024) }} KB</span>
                     </div>
                     {% endfor %}
-                    <p class="text-xs text-gray-400 mt-1">To delete attachments, use the activity detail page.</p>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">To delete attachments, use the activity detail page.</p>
                 </div>
                 {% endif %}
                 <input type="file" name="files" multiple
                     accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.md"
-                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 dark:file:bg-indigo-900/30 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/50">
             </div>
         </div>
     </div>
 
     <!-- CORE Workflow Links -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-1">CORE Workflow Links</h2>
-        <p class="text-sm text-gray-500 mb-5">
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-1">CORE Workflow Links</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
             Link resources from each stage of the
             <span class="font-medium">Capture → Organise → Review → Engage</span>
             workflow. This activity represents the Engage output — link back to earlier stages to show the full journey.
@@ -131,29 +131,29 @@ function applyTemplate() {
 
             <!-- ── Capture ── -->
             {% set capture_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'capture') | list if activity else [] %}
-            <div class="border border-amber-200 rounded-lg overflow-hidden">
-                <div class="bg-amber-50 border-b border-amber-100 px-4 py-3 flex items-center gap-3">
+            <div class="border border-amber-200 dark:border-amber-800 rounded-lg overflow-hidden">
+                <div class="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800 px-4 py-3 flex items-center gap-3">
                     <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-200 text-amber-800 text-xs font-bold flex-shrink-0">C</span>
                     <div>
-                        <h3 class="text-sm font-semibold text-amber-900">Capture</h3>
-                        <p class="text-xs text-amber-700">Initial notes and ideas — typically Google Keep</p>
+                        <h3 class="text-sm font-semibold text-amber-900 dark:text-amber-300">Capture</h3>
+                        <p class="text-xs text-amber-700 dark:text-amber-400">Initial notes and ideas — typically Google Keep</p>
                     </div>
                 </div>
-                <div id="links-capture" class="divide-y divide-gray-100">
+                <div id="links-capture" class="divide-y divide-gray-100 dark:divide-gray-700">
                     {% for resource in capture_resources %}
-                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 dark:bg-gray-700">
                         <input type="hidden" name="link_stage" value="capture">
                         <div class="sm:col-span-3">
                             <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-5">
                             <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-2">
                             <select name="link_source_type"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white">
                                 {% for value, label in source_types %}
                                 <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
@@ -161,44 +161,44 @@ function applyTemplate() {
                         </div>
                         <div class="sm:col-span-2 flex items-center gap-1">
                             <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                             <button type="button" onclick="this.closest('.resource-row').remove()"
                                 class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <div class="px-4 py-2 bg-amber-50">
+                <div class="px-4 py-2 bg-amber-50 dark:bg-amber-900/20">
                     <button type="button" onclick="addResourceRow('capture')"
-                        class="text-sm text-amber-700 hover:text-amber-900 font-medium">+ Add Capture link</button>
+                        class="text-sm text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 font-medium">+ Add Capture link</button>
                 </div>
             </div>
 
             <!-- ── Organise ── -->
             {% set organise_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'organise') | list if activity else [] %}
-            <div class="border border-blue-200 rounded-lg overflow-hidden">
-                <div class="bg-blue-50 border-b border-blue-100 px-4 py-3 flex items-center gap-3">
+            <div class="border border-blue-200 dark:border-blue-800 rounded-lg overflow-hidden">
+                <div class="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800 px-4 py-3 flex items-center gap-3">
                     <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex-shrink-0">O</span>
                     <div>
-                        <h3 class="text-sm font-semibold text-blue-900">Organise</h3>
-                        <p class="text-xs text-blue-700">Structured tasks and planning — typically Google Tasks</p>
+                        <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-300">Organise</h3>
+                        <p class="text-xs text-blue-700 dark:text-blue-400">Structured tasks and planning — typically Google Tasks</p>
                     </div>
                 </div>
-                <div id="links-organise" class="divide-y divide-gray-100">
+                <div id="links-organise" class="divide-y divide-gray-100 dark:divide-gray-700">
                     {% for resource in organise_resources %}
-                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 dark:bg-gray-700">
                         <input type="hidden" name="link_stage" value="organise">
                         <div class="sm:col-span-3">
                             <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-5">
                             <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-2">
                             <select name="link_source_type"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white">
                                 {% for value, label in source_types %}
                                 <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
@@ -206,44 +206,44 @@ function applyTemplate() {
                         </div>
                         <div class="sm:col-span-2 flex items-center gap-1">
                             <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                             <button type="button" onclick="this.closest('.resource-row').remove()"
                                 class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <div class="px-4 py-2 bg-blue-50">
+                <div class="px-4 py-2 bg-blue-50 dark:bg-blue-900/20">
                     <button type="button" onclick="addResourceRow('organise')"
-                        class="text-sm text-blue-700 hover:text-blue-900 font-medium">+ Add Organise link</button>
+                        class="text-sm text-blue-700 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-200 font-medium">+ Add Organise link</button>
                 </div>
             </div>
 
             <!-- ── Review ── -->
             {% set review_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'review') | list if activity else [] %}
-            <div class="border border-violet-200 rounded-lg overflow-hidden">
-                <div class="bg-violet-50 border-b border-violet-100 px-4 py-3 flex items-center gap-3">
+            <div class="border border-violet-200 dark:border-violet-800 rounded-lg overflow-hidden">
+                <div class="bg-violet-50 dark:bg-violet-900/20 border-b border-violet-100 dark:border-violet-800 px-4 py-3 flex items-center gap-3">
                     <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-violet-200 text-violet-800 text-xs font-bold flex-shrink-0">R</span>
                     <div>
-                        <h3 class="text-sm font-semibold text-violet-900">Review</h3>
-                        <p class="text-xs text-violet-700">Synthesis documents, diagrams, and markdown files</p>
+                        <h3 class="text-sm font-semibold text-violet-900 dark:text-violet-300">Review</h3>
+                        <p class="text-xs text-violet-700 dark:text-violet-400">Synthesis documents, diagrams, and markdown files</p>
                     </div>
                 </div>
-                <div id="links-review" class="divide-y divide-gray-100">
+                <div id="links-review" class="divide-y divide-gray-100 dark:divide-gray-700">
                     {% for resource in review_resources %}
-                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 dark:bg-gray-700">
                         <input type="hidden" name="link_stage" value="review">
                         <div class="sm:col-span-3">
                             <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-5">
                             <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-2">
                             <select name="link_source_type"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white">
                                 {% for value, label in source_types %}
                                 <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
@@ -251,44 +251,44 @@ function applyTemplate() {
                         </div>
                         <div class="sm:col-span-2 flex items-center gap-1">
                             <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                             <button type="button" onclick="this.closest('.resource-row').remove()"
                                 class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <div class="px-4 py-2 bg-violet-50">
+                <div class="px-4 py-2 bg-violet-50 dark:bg-violet-900/20">
                     <button type="button" onclick="addResourceRow('review')"
-                        class="text-sm text-violet-700 hover:text-violet-900 font-medium">+ Add Review link</button>
+                        class="text-sm text-violet-700 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-200 font-medium">+ Add Review link</button>
                 </div>
             </div>
 
             <!-- ── Engage ── -->
             {% set engage_resources = activity.resources | selectattr('workflow_stage', 'equalto', 'engage') | list if activity else [] %}
-            <div class="border border-emerald-200 rounded-lg overflow-hidden">
-                <div class="bg-emerald-50 border-b border-emerald-100 px-4 py-3 flex items-center gap-3">
+            <div class="border border-emerald-200 dark:border-emerald-800 rounded-lg overflow-hidden">
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-100 dark:border-emerald-800 px-4 py-3 flex items-center gap-3">
                     <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-200 text-emerald-800 text-xs font-bold flex-shrink-0">E</span>
                     <div>
-                        <h3 class="text-sm font-semibold text-emerald-900">Engage</h3>
-                        <p class="text-xs text-emerald-700">Final outputs and evidence — docs, drive files, code</p>
+                        <h3 class="text-sm font-semibold text-emerald-900 dark:text-emerald-300">Engage</h3>
+                        <p class="text-xs text-emerald-700 dark:text-emerald-400">Final outputs and evidence — docs, drive files, code</p>
                     </div>
                 </div>
-                <div id="links-engage" class="divide-y divide-gray-100">
+                <div id="links-engage" class="divide-y divide-gray-100 dark:divide-gray-700">
                     {% for resource in engage_resources %}
-                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50">
+                    <div class="resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 dark:bg-gray-700">
                         <input type="hidden" name="link_stage" value="engage">
                         <div class="sm:col-span-3">
                             <input type="text" name="link_title" value="{{ resource.title }}" placeholder="Title"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-5">
                             <input type="url" name="link_url" value="{{ resource.url }}" placeholder="https://..."
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                         </div>
                         <div class="sm:col-span-2">
                             <select name="link_source_type"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white">
                                 {% for value, label in source_types %}
                                 <option value="{{ value }}" {% if resource.source_type == value %}selected{% endif %}>{{ label }}</option>
                                 {% endfor %}
@@ -296,16 +296,16 @@ function applyTemplate() {
                         </div>
                         <div class="sm:col-span-2 flex items-center gap-1">
                             <input type="text" name="link_description" value="{{ resource.description }}" placeholder="Note"
-                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400">
                             <button type="button" onclick="this.closest('.resource-row').remove()"
                                 class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <div class="px-4 py-2 bg-emerald-50">
+                <div class="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20">
                     <button type="button" onclick="addResourceRow('engage')"
-                        class="text-sm text-emerald-700 hover:text-emerald-900 font-medium">+ Add Engage link</button>
+                        class="text-sm text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 font-medium">+ Add Engage link</button>
                 </div>
             </div>
 
@@ -313,9 +313,9 @@ function applyTemplate() {
     </div>
 
     <!-- KSB selection -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">KSBs Covered</h2>
-        <p class="text-sm text-gray-500 mb-4">Select which Knowledge, Skills or Behaviours this activity relates to.</p>
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">KSBs Covered</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Select which Knowledge, Skills or Behaviours this activity relates to.</p>
 
         {% if activity and activity.id %}
             {% set selected_codes = activity.ksbs|map(attribute='code')|list %}
@@ -329,12 +329,12 @@ function applyTemplate() {
                 <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {% for ksb in all_ksbs if ksb.category == 'knowledge' %}
-                    <label class="relative flex items-start p-2 rounded-md hover:bg-knowledge-light/30 cursor-pointer">
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-knowledge-light/30 dark:hover:bg-blue-900/20 cursor-pointer">
                         <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
                             {% if ksb.code in selected_codes %}checked{% endif %}
-                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-knowledge focus:ring-knowledge">
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-knowledge focus:ring-knowledge dark:bg-gray-700">
                         <span class="ml-2">
-                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ ksb.natural_code }}: {{ ksb.title }}</span>
                         </span>
                     </label>
                     {% endfor %}
@@ -345,12 +345,12 @@ function applyTemplate() {
                 <h3 class="text-sm font-semibold text-skill-dark mb-2">Skills</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {% for ksb in all_ksbs if ksb.category == 'skill' %}
-                    <label class="relative flex items-start p-2 rounded-md hover:bg-skill-light/30 cursor-pointer">
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-skill-light/30 dark:hover:bg-green-900/20 cursor-pointer">
                         <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
                             {% if ksb.code in selected_codes %}checked{% endif %}
-                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-skill focus:ring-skill">
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-skill focus:ring-skill dark:bg-gray-700">
                         <span class="ml-2">
-                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ ksb.natural_code }}: {{ ksb.title }}</span>
                         </span>
                     </label>
                     {% endfor %}
@@ -361,12 +361,12 @@ function applyTemplate() {
                 <h3 class="text-sm font-semibold text-behaviour-dark mb-2">Behaviours</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {% for ksb in all_ksbs if ksb.category == 'behaviour' %}
-                    <label class="relative flex items-start p-2 rounded-md hover:bg-behaviour-light/30 cursor-pointer">
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-behaviour-light/30 dark:hover:bg-amber-900/20 cursor-pointer">
                         <input type="checkbox" name="ksbs" value="{{ ksb.code }}"
                             {% if ksb.code in selected_codes %}checked{% endif %}
-                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-behaviour focus:ring-behaviour">
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-behaviour focus:ring-behaviour dark:bg-gray-700">
                         <span class="ml-2">
-                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ ksb.natural_code }}: {{ ksb.title }}</span>
                         </span>
                     </label>
                     {% endfor %}
@@ -376,14 +376,14 @@ function applyTemplate() {
     </div>
 
     <!-- Tags -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-1">Tags</h2>
-        <p class="text-sm text-gray-500 mb-3">Add freeform labels to categorise this activity (e.g. <em>systems thinking, root cause analysis, agile</em>). Separate multiple tags with commas. New tags are created automatically.</p>
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-1">Tags</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Add freeform labels to categorise this activity (e.g. <em>systems thinking, root cause analysis, agile</em>). Separate multiple tags with commas. New tags are created automatically.</p>
         <input type="text" name="tags" id="tags"
             value="{% if activity and activity.id %}{{ activity.tags|map(attribute='name')|join(', ') }}{% else %}{{ request.args.get('tmpl_tags', '') }}{% endif %}"
             placeholder="e.g. systems thinking, soft systems methodology"
             list="existing-tags"
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:text-white dark:placeholder-gray-400">
         {% if user_tags %}
         <datalist id="existing-tags">
             {% for tag in user_tags %}
@@ -396,7 +396,7 @@ function applyTemplate() {
             {% for tag in user_tags %}
             <button type="button"
                 onclick="toggleTag({{ tag.name|tojson }})"
-                class="tag-suggestion inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 cursor-pointer">
+                class="tag-suggestion inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 cursor-pointer">
                 {{ tag.name }}
             </button>
             {% endfor %}
@@ -407,7 +407,7 @@ function applyTemplate() {
     <!-- Submit -->
     <div class="flex justify-end gap-3">
         <a href="{{ url_for('activities.detail', activity_id=activity.id) if activity and activity.id else url_for('activities.list_activities') }}"
-            class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
             Cancel
         </a>
         <button type="submit"
@@ -481,27 +481,27 @@ function addResourceRow(stage) {
         `<option value="${t}"${i === 0 ? ' selected' : ''}>${SOURCE_TYPE_LABELS[t]}</option>`
     ).join('');
 
+    const isDark = document.documentElement.classList.contains('dark');
+    const inputClass = 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400';
+    const selectClass = 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white';
+
     const row = document.createElement('div');
-    row.className = 'resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50';
+    row.className = 'resource-row grid grid-cols-1 sm:grid-cols-12 gap-2 p-3 bg-gray-50 dark:bg-gray-700';
     row.innerHTML = `
         <input type="hidden" name="link_stage" value="${stage}">
         <div class="sm:col-span-3">
-            <input type="text" name="link_title" placeholder="Title"
-                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <input type="text" name="link_title" placeholder="Title" class="${inputClass}">
         </div>
         <div class="sm:col-span-5">
-            <input type="url" name="link_url" placeholder="https://..."
-                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <input type="url" name="link_url" placeholder="https://..." class="${inputClass}">
         </div>
         <div class="sm:col-span-2">
-            <select name="link_source_type"
-                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <select name="link_source_type" class="${selectClass}">
                 ${typeOptions}
             </select>
         </div>
         <div class="sm:col-span-2 flex items-center gap-1">
-            <input type="text" name="link_description" placeholder="Note"
-                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <input type="text" name="link_description" placeholder="Note" class="${inputClass}">
             <button type="button" onclick="this.closest('.resource-row').remove()"
                 class="text-gray-400 hover:text-red-500 text-lg flex-shrink-0">&times;</button>
         </div>

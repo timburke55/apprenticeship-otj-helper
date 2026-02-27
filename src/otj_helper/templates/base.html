@@ -1,12 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-50">
+<html lang="en" class="h-full bg-gray-50 dark:bg-gray-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}OTJ Tracker{% endblock %}{% if current_spec %} — {{ current_spec.name }}{% endif %}</title>
+    <script>
+    (function () {
+        var stored = localStorage.getItem('theme');
+        if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -43,6 +52,19 @@
                         <span class="hidden md:block text-sm text-gray-400">{{ current_user.name or current_user.email }}</span>
                         <a href="{{ url_for('auth.logout') }}" class="hidden md:block text-sm text-gray-400 hover:text-white">Sign out</a>
                         {% endif %}
+                        <!-- Dark mode toggle -->
+                        <button id="dark-mode-toggle" type="button"
+                            class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none"
+                            aria-label="Toggle dark mode">
+                            <!-- Sun: shown when in dark mode (click to go light) -->
+                            <svg id="dm-icon-sun" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0z" />
+                            </svg>
+                            <!-- Moon: shown when in light mode (click to go dark) -->
+                            <svg id="dm-icon-moon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998z" />
+                            </svg>
+                        </button>
                         <!-- Mobile menu button -->
                         <button type="button" id="mobile-menu-btn"
                             class="md:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none"
@@ -81,6 +103,16 @@
         </nav>
         <script>
         (function () {
+            function updateDarkIcons(isDark) {
+                document.getElementById('dm-icon-sun').classList.toggle('hidden', !isDark);
+                document.getElementById('dm-icon-moon').classList.toggle('hidden', isDark);
+            }
+            updateDarkIcons(document.documentElement.classList.contains('dark'));
+            document.getElementById('dark-mode-toggle').addEventListener('click', function () {
+                var isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                updateDarkIcons(isDark);
+            });
             var btn = document.getElementById('mobile-menu-btn');
             var menu = document.getElementById('mobile-menu');
             var iconOpen = document.getElementById('menu-icon-open');
@@ -101,7 +133,7 @@
         {% if messages %}
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
             {% for category, message in messages %}
-            <div class="rounded-md p-4 mb-2 {% if category == 'success' %}bg-green-50 text-green-800{% elif category == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+            <div class="rounded-md p-4 mb-2 {% if category == 'success' %}bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300{% elif category == 'error' %}bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-300{% else %}bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300{% endif %}">
                 {{ message }}
             </div>
             {% endfor %}
