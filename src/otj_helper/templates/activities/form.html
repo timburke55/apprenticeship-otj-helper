@@ -395,7 +395,7 @@ function applyTemplate() {
         <div class="mt-2 flex flex-wrap gap-1">
             {% for tag in user_tags %}
             <button type="button"
-                onclick="toggleTag('{{ tag.name }}')"
+                onclick="toggleTag({{ tag.name|tojson }})"
                 class="tag-suggestion inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700 cursor-pointer">
                 {{ tag.name }}
             </button>
