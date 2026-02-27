@@ -40,6 +40,7 @@ def create_app(test_config=None):
     app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET")
     app.config["DEV_AUTO_LOGIN_EMAIL"] = os.environ.get("DEV_AUTO_LOGIN_EMAIL")
+    app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10 MB upload limit
 
     if test_config:
         app.config.update(test_config)
@@ -74,6 +75,7 @@ def create_app(test_config=None):
     from otj_helper.routes.ksbs import bp as ksbs_bp
     from otj_helper.routes.tags import bp as tags_bp
     from otj_helper.routes.health import bp as health_bp
+    from otj_helper.routes.uploads import bp as uploads_bp
 
     init_oauth(app)
     app.register_blueprint(auth_bp)
@@ -83,6 +85,7 @@ def create_app(test_config=None):
     app.register_blueprint(ksbs_bp)
     app.register_blueprint(tags_bp)
     app.register_blueprint(health_bp)
+    app.register_blueprint(uploads_bp)
 
     @app.before_request
     def load_user():
@@ -148,6 +151,17 @@ def _migrate_db() -> list[bool]:
         "ALTER TABLE app_user ADD COLUMN seminar_target_hours REAL",
         "ALTER TABLE app_user ADD COLUMN weekly_target_hours REAL",
         "ALTER TABLE activity ADD COLUMN evidence_quality VARCHAR(20) NOT NULL DEFAULT 'draft'",
+        (
+            "CREATE TABLE IF NOT EXISTS attachment ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "activity_id INTEGER NOT NULL REFERENCES activity(id), "
+            "filename VARCHAR(255) NOT NULL, "
+            "stored_name VARCHAR(255) NOT NULL, "
+            "content_type VARCHAR(100) NOT NULL, "
+            "file_size INTEGER NOT NULL, "
+            "has_thumbnail BOOLEAN DEFAULT 0, "
+            "created_at DATETIME)"
+        ),
     ]
     results: list[bool] = []
     for sql in migrations:
