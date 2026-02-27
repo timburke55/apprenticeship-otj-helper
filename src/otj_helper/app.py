@@ -52,7 +52,12 @@ def create_app(test_config=None):
     csrf.init_app(app)
 
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as exc:
+            if "already exists" not in str(exc).lower():
+                raise
+            logger.debug("create_all: some tables already exist (concurrent worker startup), continuing: %s", exc)
         migration_results = _migrate_db()
         _seed_ksbs()
 
