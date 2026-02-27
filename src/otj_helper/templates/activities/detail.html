@@ -13,6 +13,10 @@
             </p>
         </div>
         <div class="mt-3 sm:mt-0 flex gap-2">
+            <a href="{{ url_for('templates.create_from_activity', activity_id=activity.id) }}"
+                class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Save as Template
+            </a>
             <a href="{{ url_for('activities.edit', activity_id=activity.id) }}"
                 class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Edit

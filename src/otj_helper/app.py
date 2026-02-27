@@ -75,6 +75,7 @@ def create_app(test_config=None):
     from otj_helper.routes.ksbs import bp as ksbs_bp
     from otj_helper.routes.tags import bp as tags_bp
     from otj_helper.routes.health import bp as health_bp
+    from otj_helper.routes.templates import bp as templates_bp
     from otj_helper.routes.uploads import bp as uploads_bp
 
     init_oauth(app)
@@ -85,6 +86,7 @@ def create_app(test_config=None):
     app.register_blueprint(ksbs_bp)
     app.register_blueprint(tags_bp)
     app.register_blueprint(health_bp)
+    app.register_blueprint(templates_bp)
     app.register_blueprint(uploads_bp)
 
     @app.before_request
@@ -103,6 +105,19 @@ def create_app(test_config=None):
             user_id = user.id
 
         g.user = db.session.get(User, user_id) if user_id else None
+
+    @app.before_request
+    def maybe_generate_recurring():
+        """Trigger recurring activity generation at most once per day per user session."""
+        from datetime import date as _date
+        if g.user is None:
+            return
+        today_str = _date.today().isoformat()
+        if session.get("recurrence_checked") == today_str:
+            return
+        from otj_helper.tasks.recurrence import generate_recurring_activities
+        generate_recurring_activities()
+        session["recurrence_checked"] = today_str
 
     @app.context_processor
     def inject_user():
@@ -156,6 +171,23 @@ def _migrate_db() -> list[bool]:
         "ALTER TABLE app_user ADD COLUMN seminar_target_hours REAL",
         "ALTER TABLE app_user ADD COLUMN weekly_target_hours REAL",
         "ALTER TABLE activity ADD COLUMN evidence_quality VARCHAR(20) NOT NULL DEFAULT 'draft'",
+        (
+            "CREATE TABLE IF NOT EXISTS activity_template ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            "user_id INTEGER NOT NULL REFERENCES app_user(id), "
+            "name VARCHAR(200) NOT NULL, "
+            "title VARCHAR(200) NOT NULL, "
+            "description TEXT DEFAULT '', "
+            "activity_type VARCHAR(50) NOT NULL DEFAULT 'self_study', "
+            "duration_hours REAL, "
+            "evidence_quality VARCHAR(20) DEFAULT 'draft', "
+            "tags_csv VARCHAR(500) DEFAULT '', "
+            "ksb_codes_csv VARCHAR(500) DEFAULT '', "
+            "is_recurring BOOLEAN DEFAULT 0, "
+            "recurrence_day INTEGER, "
+            "last_generated DATE, "
+            "created_at DATETIME)"
+        ),
         (
             f"CREATE TABLE IF NOT EXISTS attachment ("
             f"{_id_col}, "
