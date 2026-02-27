@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if template and template.id else 'New' }} Template{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">{{ 'Edit' if template and template.id else 'New' }} Activity Template</h1>
+</div>
+
+<form method="post" class="space-y-6">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="bg-white shadow rounded-lg p-6 space-y-4">
+        <h2 class="text-lg font-medium text-gray-900">Template Details</h2>
+
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-700">Template Name</label>
+            <input type="text" name="name" id="name" required
+                value="{{ template.name or '' if template else '' }}"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="e.g. Weekly mentor meeting">
+            <p class="mt-1 text-xs text-gray-500">A short label to identify this template in the list.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <label for="title" class="block text-sm font-medium text-gray-700">Pre-fill Title</label>
+                <input type="text" name="title" id="title" required
+                    value="{{ template.title or '' if template else '' }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g. Mentor meeting with Jane">
+                <p class="mt-1 text-xs text-gray-500">This will pre-fill the activity title when the template is used.</p>
+            </div>
+
+            <div>
+                <label for="activity_type" class="block text-sm font-medium text-gray-700">Activity Type</label>
+                <select name="activity_type" id="activity_type"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    {% for value, label in activity_types %}
+                    <option value="{{ value }}"
+                        {% if template and template.activity_type == value %}selected
+                        {% elif not template and value == 'self_study' %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="duration_hours" class="block text-sm font-medium text-gray-700">Default Duration (hours)</label>
+                <input type="number" name="duration_hours" id="duration_hours" step="0.25" min="0.25"
+                    value="{{ template.duration_hours if template and template.duration_hours is not none else '' }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g. 1.0 (optional)">
+            </div>
+
+            <div class="sm:col-span-2">
+                <label for="description" class="block text-sm font-medium text-gray-700">Pre-fill Description</label>
+                <textarea name="description" id="description" rows="3"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="Optional default description for activities using this template">{{ template.description or '' if template else '' }}</textarea>
+            </div>
+
+            <div>
+                <label for="evidence_quality" class="block text-sm font-medium text-gray-700">Default Evidence Quality</label>
+                <select name="evidence_quality" id="evidence_quality"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    {% for value, label in evidence_quality_options %}
+                    <option value="{{ value }}"
+                        {% if (template and (template.evidence_quality or 'draft') == value) or (not template and value == 'draft') %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="tags_csv" class="block text-sm font-medium text-gray-700">Tags</label>
+                <input type="text" name="tags_csv" id="tags_csv"
+                    value="{{ template.tags_csv or '' if template else '' }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="e.g. mentoring, systems-thinking (comma-separated)">
+            </div>
+        </div>
+    </div>
+
+    <!-- KSBs to pre-select -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">KSBs to Pre-select</h2>
+        <p class="text-sm text-gray-500 mb-4">Select KSBs that activities from this template typically cover.</p>
+
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-sm font-semibold text-knowledge-dark mb-2">Knowledge</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'knowledge' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-knowledge-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksb_codes" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_ksb_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-knowledge focus:ring-knowledge">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-skill-dark mb-2">Skills</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'skill' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-skill-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksb_codes" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_ksb_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-skill focus:ring-skill">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-semibold text-behaviour-dark mb-2">Behaviours</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% for ksb in all_ksbs if ksb.category == 'behaviour' %}
+                    <label class="relative flex items-start p-2 rounded-md hover:bg-behaviour-light/30 cursor-pointer">
+                        <input type="checkbox" name="ksb_codes" value="{{ ksb.code }}"
+                            {% if ksb.code in selected_ksb_codes %}checked{% endif %}
+                            class="mt-0.5 h-4 w-4 rounded border-gray-300 text-behaviour focus:ring-behaviour">
+                        <span class="ml-2">
+                            <span class="text-sm font-medium text-gray-900">{{ ksb.natural_code }}: {{ ksb.title }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recurrence -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Recurrence</h2>
+        <div class="space-y-4">
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="is_recurring" id="is_recurring"
+                    {% if template and template.is_recurring %}checked{% endif %}
+                    onchange="document.getElementById('recurrence-day-row').classList.toggle('hidden', !this.checked)"
+                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <span class="text-sm font-medium text-gray-700">Generate a draft activity automatically each week</span>
+            </label>
+            <div id="recurrence-day-row" class="{{ '' if template and template.is_recurring else 'hidden' }}">
+                <label for="recurrence_day" class="block text-sm font-medium text-gray-700">Day of the week</label>
+                <select name="recurrence_day" id="recurrence_day"
+                    class="mt-1 block w-48 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    {% for day_num, day_name in recurrence_days %}
+                    <option value="{{ day_num }}"
+                        {% if template and template.recurrence_day == day_num %}selected{% endif %}>
+                        {{ day_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-xs text-gray-500">A draft activity will be created on this day if one has not been logged yet for the week.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex justify-end gap-3">
+        <a href="{{ url_for('templates.list_templates') }}"
+            class="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            Cancel
+        </a>
+        <button type="submit"
+            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+            {{ 'Update' if template and template.id else 'Save' }} Template
+        </button>
+    </div>
+</form>
+{% endblock %}

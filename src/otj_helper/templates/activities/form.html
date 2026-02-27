@@ -6,6 +6,31 @@
     <h1 class="text-2xl font-bold text-gray-900">{{ 'Edit' if activity and activity.id else 'Log New' }} Activity</h1>
 </div>
 
+{% if user_templates and (not activity or not activity.id) %}
+<div class="mb-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+    <p class="text-sm font-medium text-gray-700 mb-2">Start from a template</p>
+    <div class="flex gap-2">
+        <select id="template-select"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            <option value="">— select a template —</option>
+            {% for tmpl in user_templates %}
+            <option value="{{ url_for('templates.use_template', template_id=tmpl.id) }}">{{ tmpl.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" onclick="applyTemplate()"
+            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 flex-shrink-0">
+            Apply
+        </button>
+    </div>
+</div>
+<script>
+function applyTemplate() {
+    var sel = document.getElementById('template-select');
+    if (sel.value) { window.location.href = sel.value; }
+}
+</script>
+{% endif %}
+
 <form method="post" class="space-y-6">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="bg-white shadow rounded-lg p-6 space-y-4">
@@ -30,7 +55,7 @@
             <div>
                 <label for="duration_hours" class="block text-sm font-medium text-gray-700">Duration (hours)</label>
                 <input type="number" name="duration_hours" id="duration_hours" required step="0.25" min="0.25"
-                    value="{{ activity.duration_hours if activity else '' }}"
+                    value="{{ activity.duration_hours if activity and activity.duration_hours is not none else '' }}"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     placeholder="e.g. 2.5">
             </div>
@@ -77,7 +102,12 @@
         <h2 class="text-lg font-medium text-gray-900 mb-4">KSBs Covered</h2>
         <p class="text-sm text-gray-500 mb-4">Select which Knowledge, Skills or Behaviours this activity relates to.</p>
 
-        {% set selected_codes = activity.ksbs|map(attribute='code')|list if activity else [] %}
+        {% if activity and activity.id %}
+            {% set selected_codes = activity.ksbs|map(attribute='code')|list %}
+        {% else %}
+            {% set _raw_ksbs = request.args.get('tmpl_ksbs', '') %}
+            {% set selected_codes = _raw_ksbs.split(',') | select | list if _raw_ksbs else [] %}
+        {% endif %}
 
         <div class="space-y-4">
             <div>
@@ -135,7 +165,7 @@
         <h2 class="text-lg font-medium text-gray-900 mb-1">Tags</h2>
         <p class="text-sm text-gray-500 mb-3">Add freeform labels to categorise this activity (e.g. <em>systems thinking, root cause analysis, agile</em>). Separate multiple tags with commas. New tags are created automatically.</p>
         <input type="text" name="tags" id="tags"
-            value="{{ activity.tags|map(attribute='name')|join(', ') if activity and activity.tags else '' }}"
+            value="{% if activity and activity.id %}{{ activity.tags|map(attribute='name')|join(', ') }}{% else %}{{ request.args.get('tmpl_tags', '') }}{% endif %}"
             placeholder="e.g. systems thinking, soft systems methodology"
             list="existing-tags"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">

@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
 
 from otj_helper.auth import login_required
-from otj_helper.models import Activity, KSB, ResourceLink, Tag, db
+from otj_helper.models import Activity, ActivityTemplate, KSB, ResourceLink, Tag, db
 
 # Which source types are surfaced per CORE stage (first entry is the default)
 _STAGE_SOURCE_TYPES = {
@@ -45,6 +45,7 @@ def _form_context(activity):
         workflow_stages=ResourceLink.WORKFLOW_STAGES,
         stage_source_types=_STAGE_SOURCE_TYPES,
         user_tags=Tag.query.filter_by(user_id=g.user.id).order_by(Tag.name).all(),
+        user_templates=ActivityTemplate.query.filter_by(user_id=g.user.id).order_by(ActivityTemplate.name).all(),
     )
 
 
@@ -145,7 +146,20 @@ def create():
     if request.method == "POST":
         return _save_activity(Activity())
 
-    return render_template("activities/form.html", **_form_context(None))
+    prefill = None
+    if request.args.get("tmpl_title"):
+        prefill = Activity()
+        prefill.title = request.args.get("tmpl_title", "")
+        prefill.activity_type = request.args.get("tmpl_type", "self_study")
+        raw_duration = request.args.get("tmpl_duration", "")
+        try:
+            prefill.duration_hours = float(raw_duration) if raw_duration else None
+        except ValueError:
+            prefill.duration_hours = None
+        prefill.description = request.args.get("tmpl_description", "")
+        prefill.evidence_quality = request.args.get("tmpl_quality", "draft")
+
+    return render_template("activities/form.html", **_form_context(prefill))
 
 
 @bp.route("/<int:activity_id>")

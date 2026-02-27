@@ -113,6 +113,37 @@ class Tag(db.Model):
     __table_args__ = (db.UniqueConstraint("name", "user_id", name="uq_tag_name_user"),)
 
 
+class ActivityTemplate(db.Model):
+    """A reusable template for quickly logging common activities."""
+
+    __tablename__ = "activity_template"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("app_user.id"), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, default="")
+    activity_type = db.Column(db.String(50), nullable=False, default="self_study")
+    duration_hours = db.Column(db.Float, nullable=True)
+    evidence_quality = db.Column(db.String(20), default="draft")
+    tags_csv = db.Column(db.String(500), default="")
+    ksb_codes_csv = db.Column(db.String(500), default="")
+
+    # Recurrence fields
+    is_recurring = db.Column(db.Boolean, default=False)
+    recurrence_day = db.Column(db.Integer, nullable=True)   # 0=Mon … 6=Sun
+    last_generated = db.Column(db.Date, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref="templates")
+
+    RECURRENCE_DAYS: ClassVar[list[tuple[int, str]]] = [
+        (0, "Monday"), (1, "Tuesday"), (2, "Wednesday"),
+        (3, "Thursday"), (4, "Friday"), (5, "Saturday"), (6, "Sunday"),
+    ]
+
+
 class ResourceLink(db.Model):
     """A link to an external resource associated with an activity."""
 
