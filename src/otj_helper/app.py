@@ -232,11 +232,25 @@ def _migrate_db() -> list[bool]:
     return results
 
 
+def _is_unique_constraint_error(exc: Exception) -> bool:
+    """Return True if *exc* is a unique-constraint violation.
+
+    Covers SQLite ('unique constraint failed') and PostgreSQL
+    ('unique violation', 'duplicate key value').
+    """
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("unique constraint failed", "unique violation", "duplicate key value"))
+
+
 def _seed_ksbs():
     """Insert KSB reference data if not already present.
 
     Seeds are keyed by (spec_code, code) so that re-running on a database that
     already has ST0787 records will still insert the new ST0763 records.
+
+    The commit is wrapped in a try/except so that a concurrent worker that
+    already committed the same rows (raising a UNIQUE constraint error) is
+    treated as a no-op rather than a fatal startup failure.
     """
     existing = {(k.spec_code, k.code) for k in KSB.query.all()}
     added = False
@@ -246,4 +260,13 @@ def _seed_ksbs():
             db.session.add(KSB(**item))
             added = True
     if added:
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            if _is_unique_constraint_error(exc):
+                logger.debug(
+                    "KSB seed skipped (concurrent worker already seeded): %s", exc
+                )
+            else:
+                raise
