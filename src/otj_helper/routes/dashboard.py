@@ -189,6 +189,12 @@ def index():
         .all()
     )
 
+    # Readiness score for the dashboard widget
+    from otj_helper.recommendations import analyse_gaps
+    readiness = analyse_gaps(uid, spec)
+    overall_score = readiness["overall_score"]
+    top_suggestions = readiness["suggestions"][:3]
+
     return render_template(
         "dashboard.html",
         total_hours=total_hours,
@@ -203,4 +209,6 @@ def index():
         otj_target_hours=g.user.otj_target_hours,
         seminar_target_hours=g.user.seminar_target_hours,
         weekly_target_hours=g.user.weekly_target_hours,
+        overall_score=overall_score,
+        top_suggestions=top_suggestions,
     )

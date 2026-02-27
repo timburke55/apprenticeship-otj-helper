@@ -14,6 +14,52 @@
     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{% if current_spec %}{{ current_spec.name }} L{{ current_spec.level }}{% endif %} — Off-the-Job Training Tracker</p>
 </div>
 
+<!-- Portfolio Readiness widget -->
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <!-- Mini circular score -->
+            {% set score = overall_score|int %}
+            {% if score >= 75 %}
+                {% set ring_cls = "stroke-emerald-500" %}
+                {% set text_cls = "text-emerald-600 dark:text-emerald-400" %}
+            {% elif score >= 50 %}
+                {% set ring_cls = "stroke-amber-500" %}
+                {% set text_cls = "text-amber-600 dark:text-amber-400" %}
+            {% else %}
+                {% set ring_cls = "stroke-red-500" %}
+                {% set text_cls = "text-red-600 dark:text-red-400" %}
+            {% endif %}
+            <div class="relative flex-shrink-0" style="width:64px;height:64px;">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 64 64">
+                    <circle cx="32" cy="32" r="26" fill="none" stroke-width="6"
+                        class="stroke-gray-200 dark:stroke-gray-700"/>
+                    <circle cx="32" cy="32" r="26" fill="none" stroke-width="6"
+                        stroke-linecap="round"
+                        stroke-dasharray="{{ 2 * 3.14159 * 26 }}"
+                        stroke-dashoffset="{{ (2 * 3.14159 * 26) * (1 - score / 100) }}"
+                        class="{{ ring_cls }}"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-sm font-bold {{ text_cls }}">{{ score }}%</span>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-white">Portfolio Readiness</h2>
+                {% if top_suggestions %}
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ top_suggestions[0] }}</p>
+                {% else %}
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">No gaps detected — great work!</p>
+                {% endif %}
+            </div>
+        </div>
+        <a href="{{ url_for('recommendations.index') }}"
+            class="flex-shrink-0 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300">
+            View all recommendations &rarr;
+        </a>
+    </div>
+</div>
+
 <!-- Summary cards -->
 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
     <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 px-4 py-5 shadow sm:p-6">
