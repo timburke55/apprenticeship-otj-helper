@@ -114,11 +114,11 @@
 {% if activities.pages > 1 %}
 <div class="flex justify-center mt-6 gap-2">
     {% if activities.has_prev %}
-    <a href="?page={{ activities.prev_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if tag_filter %}&tag={{ tag_filter }}{% endif %}" class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600">Previous</a>
+    <a href="{{ url_for('activities.list_activities', page=activities.prev_num, ksb=ksb_filter or None, type=type_filter or None, tag=tag_filter or None) }}" class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600">Previous</a>
     {% endif %}
     <span class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Page {{ activities.page }} of {{ activities.pages }}</span>
     {% if activities.has_next %}
-    <a href="?page={{ activities.next_num }}{% if ksb_filter %}&ksb={{ ksb_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if tag_filter %}&tag={{ tag_filter }}{% endif %}" class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600">Next</a>
+    <a href="{{ url_for('activities.list_activities', page=activities.next_num, ksb=ksb_filter or None, type=type_filter or None, tag=tag_filter or None) }}" class="rounded-md bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600">Next</a>
     {% endif %}
 </div>
 {% endif %}

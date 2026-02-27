@@ -268,13 +268,20 @@
 
 <script>
 (function () {
-    var isDark = document.documentElement.classList.contains('dark');
-    var tickColor = isDark ? '#9ca3af' : '#6b7280';
-    var gridColor = isDark ? '#374151' : '#e5e7eb';
+    function computeColors() {
+        var dark = document.documentElement.classList.contains('dark');
+        return {
+            tick: dark ? '#9ca3af' : '#6b7280',
+            grid: dark ? '#374151' : '#e5e7eb',
+            zero: dark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.8)',
+        };
+    }
+    var colors = computeColors();
+    var chartInstances = [];
 
     // ── Weekly hours bar chart ──────────────────────────────────────────────
     const weeklyData = {{ weekly_chart_data|tojson }};
-    new Chart(document.getElementById('weeklyChart'), {
+    chartInstances.push(new Chart(document.getElementById('weeklyChart'), {
         type: 'bar',
         data: {
             labels: weeklyData.labels,
@@ -301,22 +308,22 @@
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => v + 'h', color: tickColor },
-                    grid: { color: gridColor }
+                    ticks: { callback: v => v + 'h', color: colors.tick },
+                    grid: { color: colors.grid }
                 },
                 x: {
-                    ticks: { color: tickColor },
-                    grid: { color: gridColor }
+                    ticks: { color: colors.tick },
+                    grid: { color: colors.grid }
                 }
             }
         }
-    });
+    }));
 
     // ── Seminar vs other OTJ doughnut ────────────────────────────────────────
     const seminarHours = {{ seminar_hours|float }};
     const totalHours   = {{ total_hours|float }};
     const otherHours   = Math.max(0, totalHours - seminarHours);
-    new Chart(document.getElementById('seminarChart'), {
+    chartInstances.push(new Chart(document.getElementById('seminarChart'), {
         type: 'doughnut',
         data: {
             labels: totalHours > 0 ? ['Seminar / Structured', 'Other OTJ'] : ['No activities yet'],
@@ -336,7 +343,7 @@
             maintainAspectRatio: false,
             cutout: '60%',
             plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, color: tickColor } },
+                legend: { position: 'bottom', labels: { boxWidth: 12, color: colors.tick } },
                 tooltip: {
                     callbacks: {
                         label: ctx => {
@@ -347,16 +354,16 @@
                 }
             }
         }
-    });
+    }));
 
     // ── KSB progress horizontal bar charts ───────────────────────────────────
     function makeKsbChart(canvasId, items, color, zeroColor) {
         const el = document.getElementById(canvasId);
-        if (!el || items.length === 0) return;
+        if (!el || items.length === 0) return null;
         const labels = items.map(i => i.code);
         const hours  = items.map(i => i.hours);
         const bgColors = hours.map(h => h > 0 ? color : zeroColor);
-        new Chart(el, {
+        return new Chart(el, {
             type: 'bar',
             data: {
                 labels,
@@ -386,10 +393,10 @@
                 scales: {
                     x: {
                         beginAtZero: true,
-                        ticks: { callback: v => v + 'h', color: tickColor },
-                        grid: { color: gridColor }
+                        ticks: { callback: v => v + 'h', color: colors.tick },
+                        grid: { color: colors.grid }
                     },
-                    y: { ticks: { font: { size: 11 }, color: tickColor }, grid: { color: gridColor } }
+                    y: { ticks: { font: { size: 11 }, color: colors.tick }, grid: { color: colors.grid } }
                 }
             }
         });
@@ -399,20 +406,40 @@
     {% set s_items = ksb_coverage|selectattr('1', 'equalto', 'skill')|list %}
     {% set b_items = ksb_coverage|selectattr('1', 'equalto', 'behaviour')|list %}
 
-    var zeroColor = isDark ? 'rgba(75, 85, 99, 0.8)' : 'rgba(209, 213, 219, 0.8)';
+    [
+        makeKsbChart('ksbChartK',
+            [{% for code, cat, title, count, hours in k_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
+            'rgba(59, 130, 246, 0.75)', colors.zero
+        ),
+        makeKsbChart('ksbChartS',
+            [{% for code, cat, title, count, hours in s_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
+            'rgba(34, 197, 94, 0.75)', colors.zero
+        ),
+        makeKsbChart('ksbChartB',
+            [{% for code, cat, title, count, hours in b_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
+            'rgba(245, 158, 11, 0.75)', colors.zero
+        ),
+    ].filter(Boolean).forEach(function (c) { chartInstances.push(c); });
 
-    makeKsbChart('ksbChartK',
-        [{% for code, cat, title, count, hours in k_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
-        'rgba(59, 130, 246, 0.75)', zeroColor
-    );
-    makeKsbChart('ksbChartS',
-        [{% for code, cat, title, count, hours in s_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
-        'rgba(34, 197, 94, 0.75)', zeroColor
-    );
-    makeKsbChart('ksbChartB',
-        [{% for code, cat, title, count, hours in b_items %}{code: {{ natural_code(code)|tojson }}, hours:{{ hours|float }}},{% endfor %}],
-        'rgba(245, 158, 11, 0.75)', zeroColor
-    );
+    function updateChartColors() {
+        var c = computeColors();
+        chartInstances.forEach(function (chart) {
+            var scales = chart.options.scales || {};
+            ['x', 'y'].forEach(function (axis) {
+                if (scales[axis]) {
+                    if (scales[axis].ticks) scales[axis].ticks.color = c.tick;
+                    if (scales[axis].grid) scales[axis].grid.color = c.grid;
+                }
+            });
+            if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                chart.options.plugins.legend.labels.color = c.tick;
+            }
+            chart.update('none');
+        });
+    }
+
+    new MutationObserver(function () { updateChartColors(); })
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 })();
 
 // Real-time updates via SSE

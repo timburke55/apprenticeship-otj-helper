@@ -481,7 +481,6 @@ function addResourceRow(stage) {
         `<option value="${t}"${i === 0 ? ' selected' : ''}>${SOURCE_TYPE_LABELS[t]}</option>`
     ).join('');
 
-    const isDark = document.documentElement.classList.contains('dark');
     const inputClass = 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white dark:placeholder-gray-400';
     const selectClass = 'block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-600 dark:text-white';
 

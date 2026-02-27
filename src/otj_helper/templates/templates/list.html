@@ -41,8 +41,13 @@
             <div class="mt-2 flex flex-wrap gap-1">
                 {% for code in tmpl.ksb_codes_csv.split(',') %}
                 {% if code.strip() %}
-                <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                    {{ natural_code(code.strip()) }}
+                {% set nat = natural_code(code.strip()) %}
+                {% set cat_char = nat[0]|upper if nat else '' %}
+                <span class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium
+                    {% if cat_char == 'K' %}bg-knowledge-light text-knowledge-dark
+                    {% elif cat_char == 'S' %}bg-skill-light text-skill-dark
+                    {% else %}bg-behaviour-light text-behaviour-dark{% endif %}">
+                    {{ nat }}
                 </span>
                 {% endif %}
                 {% endfor %}
