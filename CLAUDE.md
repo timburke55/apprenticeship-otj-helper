@@ -31,17 +31,26 @@ Flask app using the application factory pattern (`src/otj_helper/app.py`). The f
 
 | Blueprint | Prefix | Responsibility |
 |-----------|--------|----------------|
-| `dashboard` | `/` | Aggregated stats: total OTJ hours, activity breakdowns, KSB coverage matrix |
-| `activities` | `/activities` | Full CRUD for Activity + ResourceLink records |
+| `landing` | `/` | Public landing page and apprenticeship standard selection |
+| `auth` | `/auth` | Google OAuth login/logout and dev auto-login |
+| `dashboard` | `/dashboard` | Aggregated stats: total OTJ hours, activity breakdowns, KSB coverage matrix, readiness score |
+| `activities` | `/activities` | Full CRUD for Activity + ResourceLink + Attachment records; CSV export |
 | `ksbs` | `/ksbs` | Read-only KSB reference browser with linked activity summaries |
+| `tags` | `/tags` | Tag management: list, rename, delete |
+| `templates` | `/templates` | Activity template CRUD; recurring template generation |
+| `recommendations` | `/recommendations` | Gap analysis dashboard (readiness score, KSB gaps, priority actions) |
+| `uploads` | `/uploads` | File upload, serve, thumbnail, and delete for Attachment records |
+| `events` | `/events` | Server-Sent Events stream for real-time dashboard updates |
 
 ### Data Models (`models.py`)
 
-Three models with a many-to-many join:
-
-- **KSB**: Reference data for the ST0787 standard (24 records seeded from `ksb_data.py`). Codes are K1–K5 (Knowledge), S1–S11 (Skills), B1–B6 (Behaviours).
-- **Activity**: Core log entry. Has `activity_type` (10 options: training_course, self_study, mentoring, shadowing, workshop, conference, project_work, research, writing, other) and a many-to-many relationship to KSB via `activity_ksbs`.
-- **ResourceLink**: Child of Activity. Each link has a `workflow_stage` following the CORE framework (capture → organise → review → engage), each stage having a default `source_type`.
+- **User** (`app_user`): Google-authenticated user. Stores `selected_spec`, hour targets (`otj_target_hours`, `seminar_target_hours`, `weekly_target_hours`).
+- **KSB**: Reference data seeded from `ksb_data.py`. Supports two specs: ST0787 (24 KSBs: K1–K5, S1–S11, B1–B6) and ST0763 (64 KSBs with `A`-prefix codes). `natural_code` property strips the spec prefix for display.
+- **Activity**: Core log entry. Fields: `title`, `activity_date`, `duration_hours`, `activity_type` (10 options), `description`, `notes`, `evidence_quality` (draft/good/review_ready). Many-to-many with KSB via `activity_ksbs` and with Tag via `activity_tags`. One-to-many with ResourceLink and Attachment.
+- **ResourceLink**: Child of Activity. Has `workflow_stage` (capture/organise/review/engage) and `source_type`. Stage-specific source type defaults are in `routes/activities.py:_STAGE_SOURCE_TYPES`.
+- **Tag**: User-scoped label. Unique per (name, user_id). Many-to-many with Activity via `activity_tags`.
+- **ActivityTemplate**: Reusable activity defaults. Fields: `name` (unique per user), `title`, `description`, `activity_type`, `duration_hours`, `evidence_quality`, `tags_csv`, `ksb_codes_csv`. Supports recurrence: `is_recurring` (bool), `recurrence_day` (0=Monday–6=Sunday), `last_generated` (date).
+- **Attachment**: File upload record. Stores `filename` (original), `stored_name` (UUID-based on disk), `content_type`, `file_size`, `has_thumbnail`.
 
 ### Schema Migrations
 
@@ -49,15 +58,23 @@ Three models with a many-to-many join:
 
 ### KSB Seeding
 
-`ksb_data.py` holds the hardcoded list of 24 KSB dicts. `app.py:_seed_ksbs()` inserts them on first run if the table is empty. Update `ksb_data.py` to change reference data; the seed only runs once unless the table is cleared.
+`ksb_data.py` holds the hardcoded KSB dicts for all supported specs. `app.py:_seed_ksbs()` inserts them on first run if the table is empty, keyed by (spec_code, code) for safe re-seeding. Update `ksb_data.py` to change reference data; the seed only runs once unless the table is cleared.
 
-### Templates
+### Jinja2 Templates
 
-Jinja2 templates under `src/otj_helper/templates/`. Base layout in `base.html` uses Tailwind CSS via CDN. KSB categories have a consistent color theme: Knowledge=blue, Skills=green, Behaviours=amber.
+Templates are under `src/otj_helper/templates/`. Base layout in `base.html` uses Tailwind CSS via CDN and includes dark-mode toggle, mobile nav, and flash messages. KSB categories have a consistent colour theme: Knowledge=blue, Skills=green, Behaviours=amber.
 
 The activity form (`templates/activities/form.html`) dynamically handles a variable number of resource link rows via JavaScript; the route handler in `routes/activities.py` reads parallel lists from `request.form.getlist(...)` to reconstruct them.
 
 Dashboard and KSB routes use SQLAlchemy subqueries with `func.sum` / `func.count` aggregations — see `routes/dashboard.py` and `routes/ksbs.py` for the pattern.
+
+### Recommendations Engine
+
+`recommendations.py:analyse_gaps()` performs deterministic gap analysis (no LLM): KSB coverage, evidence quality score, unused activity types, missing CORE workflow stages, stale KSBs (>30 days), and draft-only evidence. Readiness score = coverage_pct × 0.6 + quality_pct × 0.4.
+
+### Real-time Updates
+
+`routes/events.py` provides an SSE stream at `/events/stream`. The dashboard subscribes and reloads after `activity_saved` or `activity_deleted` events. Background task in `tasks/recurrence.py` generates recurring template activities once per day per user.
 
 ## Generative AI Guardrails (JGA Policy Compliance)
 
@@ -120,3 +137,34 @@ PRs are reviewed automatically by CodeRabbit. Follow these conventions to avoid 
 ### Python
 - **Docstrings**: Add a docstring to every new function/method. The configured coverage threshold is 80%; falling below it fails the pre-merge check.
 - **Decimal precision**: Use 1 decimal place (`round(x, 1)`, `"%.1f"`) consistently — this matches the existing UI convention throughout the app.
+
+## User Documentation
+
+The user-facing guide lives at **`docs/user-guide.md`**. It is the authoritative reference for how the app works from an end-user perspective. Keep it in sync with the code.
+
+### When to update `docs/user-guide.md`
+
+Update the user guide whenever you:
+
+- **Add a new page or route** — add a section (or sub-section) describing what the page does, how to reach it, and what actions are available.
+- **Add a new field to a form** — add the field to the relevant table in the guide, with a plain-English description of what it does and any constraints (e.g. allowed values, required vs optional).
+- **Change how a feature works** — update the description to match the new behaviour. Remove steps or options that no longer exist.
+- **Remove a feature** — remove the corresponding section or sub-section entirely. Do not leave stale instructions.
+- **Add a new activity type, evidence quality level, or KSB category** — update the relevant table in the guide.
+- **Change a URL or navigation path** — update any references in the guide.
+- **Add a new apprenticeship standard** — add a row to the standards table in section 2.
+
+### What the user guide must NOT contain
+
+- Internal implementation details (models, migrations, blueprint names, SQL queries) — those belong in this file (CLAUDE.md).
+- Developer setup instructions — those belong in README.md.
+- Anything that would tell an apprentice how to use AI to generate their evidence — the guide explicitly prohibits this and the prohibition must not be weakened.
+
+### Style conventions for the guide
+
+- Write in plain English for a non-technical audience.
+- Use tables for structured comparisons (fields, types, options).
+- Use numbered lists for sequential steps.
+- Use `**bold**` for UI element names (button labels, field names, page titles).
+- Do not include screenshots (they go stale quickly); describe the layout in words instead.
+- Keep section numbering sequential — if you add a section, renumber the table of contents and all section headings.
