@@ -7,9 +7,11 @@ from datetime import date
 from urllib.parse import urlparse
 
 from flask import Blueprint, Response, flash, g, redirect, render_template, request, url_for
+from werkzeug.utils import secure_filename
 
 from otj_helper.auth import login_required
-from otj_helper.models import Activity, ActivityTemplate, KSB, ResourceLink, Tag, db
+from otj_helper.models import Activity, ActivityTemplate, Attachment, KSB, ResourceLink, Tag, db
+from otj_helper import storage
 
 # Which source types are surfaced per CORE stage (first entry is the default)
 _STAGE_SOURCE_TYPES = {
@@ -187,10 +189,67 @@ def edit(activity_id):
 def delete(activity_id):
     """Delete an activity and redirect to the activity list."""
     activity = Activity.query.filter_by(id=activity_id, user_id=g.user.id).first_or_404()
+    for att in activity.attachments:
+        storage.delete_file(att.stored_name)
     db.session.delete(activity)
     db.session.commit()
     flash("Activity deleted.", "info")
     return redirect(url_for("activities.list_activities"))
+
+
+def _save_uploaded_files(activity):
+    """Process any files submitted with the activity form and attach them to *activity*.
+
+    Silently skips empty file inputs.  Flashes per-file error messages for
+    invalid types or oversized files.  On DB commit failure all stored files
+    are cleaned up so no orphans are left on disk.
+    """
+    files = request.files.getlist("files")
+    stored_names: list[str] = []
+    saved = 0
+    for file in files:
+        if not file.filename:
+            continue
+
+        content_type = file.content_type or ""
+        if content_type not in Attachment.ALLOWED_TYPES:
+            flash(
+                f"{secure_filename(file.filename)}: file type '{content_type}' is not allowed.",
+                "error",
+            )
+            continue
+
+        file.seek(0, 2)
+        size = file.tell()
+        file.seek(0)
+
+        if size > Attachment.MAX_FILE_SIZE:
+            flash(
+                f"{secure_filename(file.filename)}: exceeds the 10 MB size limit.",
+                "error",
+            )
+            continue
+
+        stored_name, has_thumb = storage.save_file(file, content_type)
+        stored_names.append(stored_name)
+        db.session.add(Attachment(
+            activity_id=activity.id,
+            filename=secure_filename(file.filename),
+            stored_name=stored_name,
+            content_type=content_type,
+            file_size=size,
+            has_thumbnail=has_thumb,
+        ))
+        saved += 1
+
+    if saved:
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            for sn in stored_names:
+                storage.delete_file(sn)
+            flash("Files could not be saved — please try uploading them again.", "error")
 
 
 def _save_activity(activity):
@@ -308,4 +367,8 @@ def _save_activity(activity):
 
     db.session.commit()
     flash("Activity saved.", "success")
+
+    # --- File uploads (optional) ---
+    _save_uploaded_files(activity)
+
     return redirect(url_for("activities.detail", activity_id=activity.id))

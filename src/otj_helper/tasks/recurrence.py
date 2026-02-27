@@ -1,6 +1,6 @@
 """Recurring activity generation task."""
 
-from datetime import date, timedelta
+from datetime import date
 
 
 def generate_recurring_activities():
@@ -23,9 +23,7 @@ def generate_recurring_activities():
         if today.weekday() != tmpl.recurrence_day:
             continue
 
-        # target_date is always today when weekday matches
-        days_since = (today.weekday() - tmpl.recurrence_day) % 7
-        target_date = today - timedelta(days=days_since)
+        target_date = today
 
         # Skip if already generated for this week
         if tmpl.last_generated is not None and tmpl.last_generated >= target_date:

@@ -236,6 +236,49 @@
     </div>
 </div>
 
+<!-- Attachments -->
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 mb-3">Attachments</h2>
+
+    {% if activity.attachments %}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        {% for att in activity.attachments %}
+        <div class="border rounded-lg p-2 text-center">
+            {% if att.has_thumbnail %}
+            <a href="{{ url_for('uploads.serve_file', attachment_id=att.id) }}" target="_blank">
+                <img src="{{ url_for('uploads.serve_thumb', attachment_id=att.id) }}"
+                    class="w-full h-24 object-cover rounded" alt="{{ att.filename }}">
+            </a>
+            {% else %}
+            <a href="{{ url_for('uploads.serve_file', attachment_id=att.id) }}" target="_blank"
+                class="block p-4 text-indigo-600 hover:text-indigo-500">
+                <span class="text-2xl">&#128196;</span>
+            </a>
+            {% endif %}
+            <p class="text-xs text-gray-500 truncate mt-1">{{ att.filename }}</p>
+            <p class="text-xs text-gray-400">{{ (att.file_size / 1024)|round(0)|int }} KB</p>
+            <form method="post" action="{{ url_for('uploads.delete_attachment', attachment_id=att.id) }}"
+                class="mt-1" onsubmit="return confirm('Delete this file?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="text-xs text-red-500 hover:text-red-700">Delete</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('uploads.upload', activity_id=activity.id) }}"
+        enctype="multipart/form-data" class="flex items-center gap-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" name="files" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.md"
+            class="text-sm text-gray-500">
+        <button type="submit"
+            class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500">
+            Upload
+        </button>
+    </form>
+</div>
+
 {% if activity.notes %}
 <div class="bg-white shadow rounded-lg p-6 mb-6">
     <h2 class="text-sm font-medium text-gray-500 mb-2">Notes</h2>

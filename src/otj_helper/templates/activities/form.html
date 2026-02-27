@@ -31,7 +31,7 @@ function applyTemplate() {
 </script>
 {% endif %}
 
-<form method="post" class="space-y-6">
+<form method="post" enctype="multipart/form-data" class="space-y-6">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="bg-white shadow rounded-lg p-6 space-y-4">
         <h2 class="text-lg font-medium text-gray-900">Activity Details</h2>
@@ -381,6 +381,28 @@ function applyTemplate() {
             </div>
 
         </div>
+    </div>
+
+    <!-- Attachments -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-1">Attachments</h2>
+        <p class="text-sm text-gray-500 mb-3">Upload files as evidence — images, PDFs, or documents. Max 10 MB each.</p>
+        {% if activity and activity.id and activity.attachments %}
+        <div class="mb-4 space-y-1">
+            {% for att in activity.attachments %}
+            <div class="flex items-center gap-2 text-sm">
+                <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></svg>
+                <a href="{{ url_for('uploads.serve_file', attachment_id=att.id) }}" target="_blank"
+                   class="text-indigo-600 hover:underline truncate">{{ att.filename }}</a>
+                <span class="text-gray-400 flex-shrink-0">{{ "%.1f"|format(att.file_size / 1024) }} KB</span>
+            </div>
+            {% endfor %}
+            <p class="text-xs text-gray-400 mt-1">To delete attachments, use the activity detail page.</p>
+        </div>
+        {% endif %}
+        <input type="file" name="files" multiple
+            accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.md"
+            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
     </div>
 
     <!-- Submit -->
