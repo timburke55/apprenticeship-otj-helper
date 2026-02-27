@@ -113,6 +113,35 @@ class Tag(db.Model):
     __table_args__ = (db.UniqueConstraint("name", "user_id", name="uq_tag_name_user"),)
 
 
+class Attachment(db.Model):
+    """A file attached to an activity."""
+
+    __tablename__ = "attachment"
+
+    id = db.Column(db.Integer, primary_key=True)
+    activity_id = db.Column(db.Integer, db.ForeignKey("activity.id"), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)       # Original filename
+    stored_name = db.Column(db.String(255), nullable=False)    # UUID-based stored name
+    content_type = db.Column(db.String(100), nullable=False)
+    file_size = db.Column(db.Integer, nullable=False)          # Bytes
+    has_thumbnail = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    activity = db.relationship(
+        "Activity",
+        backref=db.backref("attachments", cascade="all, delete-orphan"),
+    )
+
+    ALLOWED_TYPES: ClassVar[set[str]] = {
+        "image/jpeg", "image/png", "image/gif", "image/webp",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain", "text/markdown",
+    }
+    MAX_FILE_SIZE: ClassVar[int] = 10 * 1024 * 1024  # 10 MB
+
+
 class ResourceLink(db.Model):
     """A link to an external resource associated with an activity."""
 

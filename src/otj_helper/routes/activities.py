@@ -10,6 +10,7 @@ from flask import Blueprint, Response, flash, g, redirect, render_template, requ
 
 from otj_helper.auth import login_required
 from otj_helper.models import Activity, KSB, ResourceLink, Tag, db
+from otj_helper import storage
 
 # Which source types are surfaced per CORE stage (first entry is the default)
 _STAGE_SOURCE_TYPES = {
@@ -173,6 +174,8 @@ def edit(activity_id):
 def delete(activity_id):
     """Delete an activity and redirect to the activity list."""
     activity = Activity.query.filter_by(id=activity_id, user_id=g.user.id).first_or_404()
+    for att in activity.attachments:
+        storage.delete_file(att.stored_name)
     db.session.delete(activity)
     db.session.commit()
     flash("Activity deleted.", "info")
