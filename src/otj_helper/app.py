@@ -55,7 +55,7 @@ def create_app(test_config=None):
         try:
             db.create_all()
         except Exception as exc:
-            if "already exists" not in str(exc).lower():
+            if not _is_duplicate_ddl_error(exc):
                 raise
             logger.debug("create_all: some tables already exist (concurrent worker startup), continuing: %s", exc)
         migration_results = _migrate_db()
@@ -143,6 +143,16 @@ def create_app(test_config=None):
     return app
 
 
+def _is_duplicate_ddl_error(exc: Exception) -> bool:
+    """Return True if *exc* indicates a DDL object (table/column) already exists.
+
+    Covers both SQLite ('already exists') and PostgreSQL ('already exists',
+    'duplicate column', 'duplicate table') error messages.
+    """
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("already exists", "duplicate column", "duplicate table"))
+
+
 def _migrate_db() -> list[bool]:
     """Apply incremental schema migrations for existing databases.
 
@@ -214,11 +224,7 @@ def _migrate_db() -> list[bool]:
             logger.debug("Migration applied: %.80s", sql)
             results.append(True)
         except Exception as exc:
-            msg = str(exc).lower()
-            already_exists = any(
-                kw in msg for kw in ("already exists", "duplicate column", "duplicate table")
-            )
-            if already_exists:
+            if _is_duplicate_ddl_error(exc):
                 logger.debug("Migration skipped (already applied): %.80s", sql)
             else:
                 logger.warning("Migration failed unexpectedly — sql=%.80s error=%s", sql, exc)
