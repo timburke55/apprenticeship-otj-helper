@@ -1,5 +1,7 @@
 """Upload, serve, and delete routes for activity file attachments."""
 
+import os
+
 from flask import Blueprint, abort, flash, redirect, send_file, url_for
 from flask import request, g
 from werkzeug.utils import secure_filename
@@ -74,6 +76,8 @@ def serve_file(attachment_id):
     """Serve the original uploaded file."""
     att = _get_attachment_or_404(attachment_id)
     path = storage.get_file_path(att.stored_name)
+    if not os.path.exists(path):
+        abort(404)
     response = send_file(path, mimetype=att.content_type, download_name=att.filename)
     response.headers["Cache-Control"] = "private, max-age=3600"
     return response
@@ -87,6 +91,8 @@ def serve_thumb(attachment_id):
     if not att.has_thumbnail:
         abort(404)
     path = storage.get_thumb_path(att.stored_name)
+    if not os.path.exists(path):
+        abort(404)
     response = send_file(path, mimetype=att.content_type)
     response.headers["Cache-Control"] = "private, max-age=3600"
     return response

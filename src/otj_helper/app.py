@@ -133,6 +133,11 @@ def _migrate_db() -> list[bool]:
     Returns a list of booleans indicating whether each migration was applied
     (True) or skipped (False — already present).
     """
+    # Build the attachment DDL using dialect-appropriate auto-increment syntax.
+    # db.create_all() (called before this) always creates the table via ORM DDL,
+    # so this migration is a safe no-op on fresh installs of either dialect.
+    _pg = db.engine.dialect.name == "postgresql"
+    _id_col = "id SERIAL PRIMARY KEY" if _pg else "id INTEGER PRIMARY KEY AUTOINCREMENT"
     migrations = [
         "ALTER TABLE resource_link ADD COLUMN workflow_stage VARCHAR(20) NOT NULL DEFAULT 'engage'",
         "ALTER TABLE activity ADD COLUMN user_id INTEGER REFERENCES app_user(id)",
@@ -152,8 +157,8 @@ def _migrate_db() -> list[bool]:
         "ALTER TABLE app_user ADD COLUMN weekly_target_hours REAL",
         "ALTER TABLE activity ADD COLUMN evidence_quality VARCHAR(20) NOT NULL DEFAULT 'draft'",
         (
-            "CREATE TABLE IF NOT EXISTS attachment ("
-            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            f"CREATE TABLE IF NOT EXISTS attachment ("
+            f"{_id_col}, "
             "activity_id INTEGER NOT NULL REFERENCES activity(id), "
             "filename VARCHAR(255) NOT NULL, "
             "stored_name VARCHAR(255) NOT NULL, "

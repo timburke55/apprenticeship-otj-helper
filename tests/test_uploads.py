@@ -1,6 +1,7 @@
 """Tests for file upload, serving, and deletion."""
 
 import io
+import re
 
 import pytest
 
@@ -14,8 +15,12 @@ def _use_tmp_upload_dir(tmp_path, monkeypatch):
 
 
 def _create_activity(client):
-    """Helper to create a minimal activity and return the response."""
-    return client.post(
+    """Create a minimal activity and return (final_response, activity_id).
+
+    The activity ID is parsed from the redirect Location header so no
+    out-of-context DB queries are needed.
+    """
+    redirect_resp = client.post(
         "/activities/new",
         data={
             "title": "Upload test",
@@ -24,18 +29,24 @@ def _create_activity(client):
             "activity_type": "self_study",
             "evidence_quality": "draft",
         },
-        follow_redirects=True,
+        follow_redirects=False,
     )
+    location = redirect_resp.headers.get("Location", "")
+    match = re.search(r"/activities/(\d+)", location)
+    activity_id = int(match.group(1)) if match else None
+    # Follow the redirect so callers can assert on the final rendered page
+    resp = client.get(location, follow_redirects=True)
+    return resp, activity_id
 
 
 def test_upload_file(_with_spec, client):
     """Upload a plain-text file to an activity."""
-    resp = _create_activity(client)
+    resp, activity_id = _create_activity(client)
     assert resp.status_code == 200
 
     data = {"files": (io.BytesIO(b"test content"), "test.txt", "text/plain")}
     resp = client.post(
-        "/uploads/activity/1",
+        f"/uploads/activity/{activity_id}",
         data=data,
         content_type="multipart/form-data",
         follow_redirects=True,
@@ -46,12 +57,12 @@ def test_upload_file(_with_spec, client):
 
 def test_upload_rejects_invalid_type(_with_spec, client):
     """Reject files with disallowed MIME types."""
-    resp = _create_activity(client)
+    resp, activity_id = _create_activity(client)
     assert resp.status_code == 200
 
     data = {"files": (io.BytesIO(b"#!/bin/bash"), "script.sh", "application/x-sh")}
     resp = client.post(
-        "/uploads/activity/1",
+        f"/uploads/activity/{activity_id}",
         data=data,
         content_type="multipart/form-data",
         follow_redirects=True,
@@ -63,11 +74,11 @@ def test_upload_rejects_invalid_type(_with_spec, client):
 
 def test_upload_no_files_selected(_with_spec, client):
     """Uploading with no file selected shows an error flash."""
-    resp = _create_activity(client)
+    resp, activity_id = _create_activity(client)
     assert resp.status_code == 200
 
     resp = client.post(
-        "/uploads/activity/1",
+        f"/uploads/activity/{activity_id}",
         data={},
         content_type="multipart/form-data",
         follow_redirects=True,
@@ -78,27 +89,29 @@ def test_upload_no_files_selected(_with_spec, client):
 
 def test_delete_attachment(_with_spec, client):
     """Deleting an attachment removes it and redirects to the activity."""
-    resp = _create_activity(client)
+    resp, activity_id = _create_activity(client)
     assert resp.status_code == 200
 
-    data = {"files": (io.BytesIO(b"hello"), "note.txt", "text/plain")}
-    client.post(
-        "/uploads/activity/1",
-        data=data,
+    # Upload a file first, then grab the attachment ID from the redirect location
+    upload_redirect = client.post(
+        f"/uploads/activity/{activity_id}",
+        data={"files": (io.BytesIO(b"hello"), "note.txt", "text/plain")},
         content_type="multipart/form-data",
-        follow_redirects=True,
+        follow_redirects=False,
     )
+    # The detail page now contains the attachment; scrape its delete URL
+    detail_resp = client.get(upload_redirect.headers["Location"])
+    match = re.search(rb"/uploads/(\d+)/delete", detail_resp.data)
+    assert match, "attachment delete URL not found in detail page"
+    att_id = int(match.group(1))
 
-    resp = client.post(
-        "/uploads/1/delete",
-        follow_redirects=True,
-    )
+    resp = client.post(f"/uploads/{att_id}/delete", follow_redirects=True)
     assert resp.status_code == 200
     assert b"Attachment deleted" in resp.data
 
 
-def test_upload_requires_activity_ownership(_with_spec, client):
-    """Uploading to a nonexistent activity returns 404."""
+def test_upload_to_nonexistent_activity(_with_spec, client):
+    """Uploading to a non-existent activity ID returns 404."""
     data = {"files": (io.BytesIO(b"data"), "file.txt", "text/plain")}
     resp = client.post(
         "/uploads/activity/9999",
