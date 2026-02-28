@@ -137,6 +137,7 @@ PRs are reviewed automatically by CodeRabbit. Follow these conventions to avoid 
 ### Python
 - **Docstrings**: Add a docstring to every new function/method. The configured coverage threshold is 80%; falling below it fails the pre-merge check.
 - **Decimal precision**: Use 1 decimal place (`round(x, 1)`, `"%.1f"`) consistently — this matches the existing UI convention throughout the app.
+- **DB dialect checks**: Use `db.engine.dialect.name == "sqlite"` (or `"postgresql"`) rather than substring-matching the URL string. The URL can contain the word "sqlite" in a path component or username and produce false positives.
 
 ## User Documentation
 

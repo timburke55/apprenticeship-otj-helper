@@ -53,6 +53,7 @@ def create_app(test_config=None):
     csrf.init_app(app)
 
     with app.app_context():
+        _validate_railway_db()
         try:
             db.create_all()
         except Exception as exc:
@@ -146,6 +147,43 @@ def create_app(test_config=None):
         return {"current_user": user, "current_spec": spec, "natural_code": natural_code}
 
     return app
+
+
+def _validate_railway_db() -> None:
+    """Validate PostgreSQL is attached when running on Railway.
+
+    Railway sets the ``RAILWAY_ENVIRONMENT`` variable automatically.  If it is
+    present and the configured database is SQLite (i.e. ``DATABASE_URL`` was
+    never linked to this service), the app raises ``RuntimeError`` immediately
+    so the deploy fails with a clear log message rather than silently running
+    against an ephemeral filesystem database.
+
+    A live ``SELECT 1`` probe is also executed to catch cases where
+    ``DATABASE_URL`` is set but the PostgreSQL instance is unreachable (e.g.
+    not yet provisioned, wrong credentials).
+    """
+    if not os.environ.get("RAILWAY_ENVIRONMENT"):
+        return
+
+    if db.engine.dialect.name != "postgresql":
+        raise RuntimeError(
+            f"RAILWAY_ENVIRONMENT is set but the configured database dialect "
+            f"'{db.engine.dialect.name}' is not supported — only PostgreSQL is "
+            f"supported in this environment.\n"
+            "Fix: open your Railway project, add a PostgreSQL addon, and link its "
+            "DATABASE_URL variable to this service, then redeploy."
+        )
+
+    db_uri = db.engine.url.render_as_string(hide_password=True)
+    logger.info("Railway environment detected (db=%s) — probing PostgreSQL connection...", db_uri)
+    try:
+        db.session.execute(text("SELECT 1"))
+        logger.info("Railway PostgreSQL connection probe: OK")
+    except Exception as exc:
+        raise RuntimeError(
+            f"Railway PostgreSQL connection failed at startup: {exc}\n"
+            "Verify that DATABASE_URL is correct and the PostgreSQL service is running."
+        ) from exc
 
 
 def _is_duplicate_ddl_error(exc: Exception) -> bool:
