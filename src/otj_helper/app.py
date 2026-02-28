@@ -2,6 +2,7 @@
 
 import logging
 import os
+import urllib.parse
 from pathlib import Path
 
 from flask import Flask, g, session
@@ -19,6 +20,39 @@ logger = logging.getLogger(__name__)
 csrf = CSRFProtect()
 
 
+def _normalize_db_url_password(db_url: str) -> str:
+    """Re-encode the password component of a database URL.
+
+    Railway (and some other platforms) may generate passwords that contain
+    special characters such as ``@``, ``#``, or ``%``.  If those characters
+    are not percent-encoded in the ``DATABASE_URL``, SQLAlchemy and psycopg2
+    can parse the URL incorrectly and send the wrong password to PostgreSQL,
+    producing a ``password authentication failed`` error at startup.
+
+    ``urllib.parse.urlparse`` always URL-decodes the ``.password`` property, so
+    round-tripping through ``urllib.parse.quote`` guarantees that every special
+    character is consistently encoded regardless of how the source URL was
+    originally formatted.
+    """
+    try:
+        parsed = urllib.parse.urlparse(db_url)
+        if parsed.password is None:
+            return db_url
+        safe_pw = urllib.parse.quote(parsed.password, safe="")
+        safe_user = urllib.parse.quote(parsed.username or "", safe="")
+        userinfo = f"{safe_user}:{safe_pw}"
+        host_part = parsed.hostname or ""
+        if parsed.port:
+            host_part = f"{host_part}:{parsed.port}"
+        netloc = f"{userinfo}@{host_part}" if host_part else userinfo
+        return urllib.parse.urlunparse(parsed._replace(netloc=netloc))
+    except Exception:
+        # If anything goes wrong during re-encoding, return the original URL
+        # unchanged so the caller can attempt the connection and surface a
+        # more specific error.
+        return db_url
+
+
 def create_app(test_config=None):
     app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -28,6 +62,7 @@ def create_app(test_config=None):
         # Railway historically issued postgres:// which SQLAlchemy rejects
         if db_url.startswith("postgres://"):
             db_url = db_url.replace("postgres://", "postgresql://", 1)
+        db_url = _normalize_db_url_password(db_url)
     else:
         db_path = os.environ.get(
             "OTJ_DB_PATH",
