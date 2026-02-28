@@ -167,9 +167,9 @@ def _validate_railway_db() -> None:
 
     if db.engine.dialect.name != "postgresql":
         raise RuntimeError(
-            "RAILWAY_ENVIRONMENT is set but no PostgreSQL database is configured — "
-            "the app would start against a SQLite file on an ephemeral filesystem, "
-            "losing all data on every deploy.\n"
+            f"RAILWAY_ENVIRONMENT is set but the configured database dialect "
+            f"'{db.engine.dialect.name}' is not supported — only PostgreSQL is "
+            f"supported in this environment.\n"
             "Fix: open your Railway project, add a PostgreSQL addon, and link its "
             "DATABASE_URL variable to this service, then redeploy."
         )
