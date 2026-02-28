@@ -2,6 +2,7 @@
 
 import logging
 import os
+import time
 import urllib.parse
 from pathlib import Path
 
@@ -24,30 +25,49 @@ def _normalize_db_url_password(db_url: str) -> str:
     """Re-encode the password component of a database URL.
 
     Railway (and some other platforms) may generate passwords that contain
-    special characters such as ``@``, ``#``, or ``%``.  If those characters
-    are not percent-encoded in the ``DATABASE_URL``, SQLAlchemy and psycopg2
-    can parse the URL incorrectly and send the wrong password to PostgreSQL,
-    producing a ``password authentication failed`` error at startup.
+    special characters such as ``@``, ``#``, ``?``, or ``%``.  If those
+    characters are not percent-encoded in the ``DATABASE_URL``, SQLAlchemy
+    and psycopg2 can parse the URL incorrectly and send the wrong password
+    to PostgreSQL, producing a ``password authentication failed`` error at
+    startup.
 
-    ``urllib.parse.urlparse`` returns the raw (still-percent-encoded) ``.password``
-    string in Python 3.11+.  This function unquotes it first, then re-encodes with
-    ``urllib.parse.quote`` so the round-trip is idempotent regardless of whether
-    the source URL was already encoded or not.
+    This function uses manual URL splitting (``rpartition``/``partition``)
+    instead of ``urllib.parse.urlparse`` so that characters like ``#`` and
+    ``?`` inside the password are not misinterpreted as URL fragment or
+    query delimiters.  The password is unquoted then re-quoted so the
+    round-trip is idempotent regardless of whether the source URL was
+    already percent-encoded.
     """
     try:
-        parsed = urllib.parse.urlparse(db_url)
-        if parsed.password is None:
+        scheme_sep = db_url.find("://")
+        if scheme_sep < 0:
             return db_url
+
+        scheme = db_url[:scheme_sep]
+        rest = db_url[scheme_sep + 3:]  # everything after ://
+
+        # Split userinfo from hostinfo at the LAST '@' so that '@'
+        # characters inside the password are preserved.
+        userinfo, at_sign, hostinfo = rest.rpartition("@")
+        if not at_sign:
+            return db_url  # no credentials in the URL
+
+        # Split username from password at the FIRST ':'
+        username, colon, password = userinfo.partition(":")
+        if not colon:
+            return db_url  # username only, no password
+
         # unquote first so that an already-encoded password (e.g. %40 for @)
         # is not double-encoded to %2540; the round-trip is idempotent.
-        safe_pw = urllib.parse.quote(urllib.parse.unquote(parsed.password), safe="")
-        safe_user = urllib.parse.quote(urllib.parse.unquote(parsed.username or ""), safe="")
-        userinfo = f"{safe_user}:{safe_pw}"
-        host_part = parsed.hostname or ""
-        if parsed.port:
-            host_part = f"{host_part}:{parsed.port}"
-        netloc = f"{userinfo}@{host_part}" if host_part else userinfo
-        return urllib.parse.urlunparse(parsed._replace(netloc=netloc))
+        safe_pw = urllib.parse.quote(urllib.parse.unquote(password), safe="")
+        safe_user = urllib.parse.quote(urllib.parse.unquote(username), safe="")
+
+        normalized = f"{scheme}://{safe_user}:{safe_pw}@{hostinfo}"
+        if normalized != db_url:
+            logger.info(
+                "DATABASE_URL password re-encoded (special characters were percent-escaped)"
+            )
+        return normalized
     except Exception:
         # If anything goes wrong during re-encoding, return the original URL
         # unchanged so the caller can attempt the connection and surface a
@@ -95,15 +115,23 @@ def _validate_railway_env(db_url: str) -> None:
     errors: list[str] = []
 
     # --- DATABASE_URL component check ---
+    # Use manual splitting (matching _normalize_db_url_password) so that
+    # special characters like '#' inside the password don't fool urlparse
+    # into reporting a missing host or password.
     if db_url.startswith("postgresql"):
         try:
-            parsed = urllib.parse.urlparse(db_url)
+            scheme_sep = db_url.find("://")
+            rest = db_url[scheme_sep + 3:] if scheme_sep >= 0 else ""
+            userinfo, at_sign, hostinfo = rest.rpartition("@")
             missing_parts = []
-            if not parsed.hostname:
+            if not at_sign or not hostinfo or hostinfo.startswith("/"):
                 missing_parts.append("host")
-            if not parsed.password:
+            _user, colon, _pw = userinfo.partition(":") if at_sign else ("", "", "")
+            if not colon or not _pw:
                 missing_parts.append("password")
-            if not parsed.path or parsed.path == "/":
+            # database name is after the first '/' in hostinfo
+            db_name = hostinfo.partition("/")[2].partition("?")[0] if hostinfo else ""
+            if not db_name:
                 missing_parts.append("database name")
             if missing_parts:
                 errors.append(
@@ -112,7 +140,7 @@ def _validate_railway_env(db_url: str) -> None:
                     "reference variable is linked to this service (not manually typed)."
                 )
         except Exception:
-            logger.debug("Unparseable DATABASE_URL: %s", db_url, exc_info=True)
+            logger.debug("Unparseable DATABASE_URL", exc_info=True)
 
     # --- SECRET_KEY check ---
     if os.environ.get("SECRET_KEY", _INSECURE_DEFAULT_KEY) == _INSECURE_DEFAULT_KEY:
@@ -163,6 +191,11 @@ def create_app(test_config=None):
         db_url = f"sqlite:///{db_path}"
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+    # Validate connections before handing them out from the pool.  This
+    # prevents stale-connection errors when PostgreSQL restarts or when a
+    # gunicorn worker inherits a connection forked from the master process.
+    if db_url.startswith("postgresql"):
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", _INSECURE_DEFAULT_KEY)
     app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET")
@@ -279,8 +312,12 @@ def create_app(test_config=None):
     return app
 
 
+_RAILWAY_DB_PROBE_RETRIES = 3
+_RAILWAY_DB_PROBE_BASE_DELAY = 2  # seconds
+
+
 def _validate_railway_db() -> None:
-    """Validate PostgreSQL is attached when running on Railway.
+    """Validate PostgreSQL is attached and reachable when running on Railway.
 
     Railway sets the ``RAILWAY_ENVIRONMENT`` variable automatically.  If it is
     present and the configured database is SQLite (i.e. ``DATABASE_URL`` was
@@ -288,9 +325,10 @@ def _validate_railway_db() -> None:
     so the deploy fails with a clear log message rather than silently running
     against an ephemeral filesystem database.
 
-    A live ``SELECT 1`` probe is also executed to catch cases where
-    ``DATABASE_URL`` is set but the PostgreSQL instance is unreachable (e.g.
-    not yet provisioned, wrong credentials).
+    A live ``SELECT 1`` probe is executed with retries to catch cases where
+    ``DATABASE_URL`` is set but the PostgreSQL instance is temporarily
+    unreachable (e.g. still starting up after a deploy, brief network blip,
+    or credentials not yet propagated).
     """
     if not os.environ.get("RAILWAY_ENVIRONMENT"):
         return
@@ -306,22 +344,46 @@ def _validate_railway_db() -> None:
 
     db_uri = db.engine.url.render_as_string(hide_password=True)
     logger.info("Railway environment detected (db=%s) — probing PostgreSQL connection...", db_uri)
-    try:
-        db.session.execute(text("SELECT 1"))
-        logger.info("Railway PostgreSQL connection probe: OK")
-    except Exception as exc:
-        exc_str = str(exc)
-        hint = (
-            "The password in DATABASE_URL does not match the PostgreSQL service. "
-            "This usually means the addon was re-provisioned after DATABASE_URL was set. "
-            "Fix: open the Railway PostgreSQL addon → Variables tab, copy the current "
-            "DATABASE_URL value, and update the reference on this service."
-            if "password authentication failed" in exc_str
-            else "Verify that DATABASE_URL is correct and the PostgreSQL service is running."
-        )
-        raise RuntimeError(
-            f"Railway PostgreSQL connection failed at startup: {exc}\n{hint}"
-        ) from exc
+
+    last_exc = None
+    for attempt in range(1, _RAILWAY_DB_PROBE_RETRIES + 1):
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info(
+                "Railway PostgreSQL connection probe: OK (attempt %d/%d)",
+                attempt,
+                _RAILWAY_DB_PROBE_RETRIES,
+            )
+            return
+        except Exception as exc:
+            last_exc = exc
+            if attempt < _RAILWAY_DB_PROBE_RETRIES:
+                delay = _RAILWAY_DB_PROBE_BASE_DELAY ** attempt  # 2s, 4s
+                logger.warning(
+                    "Railway PostgreSQL probe attempt %d/%d failed: %s "
+                    "— retrying in %ds",
+                    attempt,
+                    _RAILWAY_DB_PROBE_RETRIES,
+                    exc,
+                    delay,
+                )
+                time.sleep(delay)
+
+    # All retries exhausted — raise with an actionable hint.
+    exc_str = str(last_exc)
+    hint = (
+        "The password in DATABASE_URL does not match the PostgreSQL service. "
+        "This usually means the addon was re-provisioned after DATABASE_URL was set. "
+        "Fix: open the Railway PostgreSQL addon → Variables tab, copy the current "
+        "DATABASE_URL value, and update the reference on this service."
+        if "password authentication failed" in exc_str
+        else "Verify that DATABASE_URL is correct and the PostgreSQL service is running."
+    )
+    raise RuntimeError(
+        f"Railway PostgreSQL connection failed at startup after "
+        f"{_RAILWAY_DB_PROBE_RETRIES} attempts: {last_exc}\n{hint}"
+    ) from last_exc
 
 
 def _is_duplicate_ddl_error(exc: Exception) -> bool:

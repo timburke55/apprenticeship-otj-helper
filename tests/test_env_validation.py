@@ -55,6 +55,35 @@ def test_normalize_encodes_hash_in_password():
     assert "%23" in result
 
 
+def test_normalize_handles_raw_hash_in_password():
+    """A raw # in the password (not pre-encoded) is encoded as %23.
+
+    This is the critical case that urllib.parse.urlparse gets wrong — it
+    treats # as the fragment delimiter, truncating the password and
+    losing the host/port/database.
+    """
+    url = "postgresql://user:pass#word@host:5432/db"
+    result = _normalize_db_url_password(url)
+    assert "pass%23word" in result
+    assert "@host:5432/db" in result
+
+
+def test_normalize_handles_raw_question_mark_in_password():
+    """A raw ? in the password is encoded as %3F without breaking query params."""
+    url = "postgresql://user:pass?word@host:5432/db"
+    result = _normalize_db_url_password(url)
+    assert "pass%3Fword" in result
+    assert "@host:5432/db" in result
+
+
+def test_normalize_preserves_query_params():
+    """Query parameters after the database name survive normalisation."""
+    url = "postgresql://user:p%40ss@host:5432/db?sslmode=require"
+    result = _normalize_db_url_password(url)
+    assert "sslmode=require" in result
+    assert "@host:5432/db?sslmode=require" in result
+
+
 def test_normalize_encodes_percent_in_password():
     """A literal % in the password (encoded as %25) survives the round-trip."""
     url = "postgresql://user:pass%25word@host:5432/db"
