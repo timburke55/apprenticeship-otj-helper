@@ -29,17 +29,19 @@ def _normalize_db_url_password(db_url: str) -> str:
     can parse the URL incorrectly and send the wrong password to PostgreSQL,
     producing a ``password authentication failed`` error at startup.
 
-    ``urllib.parse.urlparse`` always URL-decodes the ``.password`` property, so
-    round-tripping through ``urllib.parse.quote`` guarantees that every special
-    character is consistently encoded regardless of how the source URL was
-    originally formatted.
+    ``urllib.parse.urlparse`` returns the raw (still-percent-encoded) ``.password``
+    string in Python 3.11+.  This function unquotes it first, then re-encodes with
+    ``urllib.parse.quote`` so the round-trip is idempotent regardless of whether
+    the source URL was already encoded or not.
     """
     try:
         parsed = urllib.parse.urlparse(db_url)
         if parsed.password is None:
             return db_url
-        safe_pw = urllib.parse.quote(parsed.password, safe="")
-        safe_user = urllib.parse.quote(parsed.username or "", safe="")
+        # unquote first so that an already-encoded password (e.g. %40 for @)
+        # is not double-encoded to %2540; the round-trip is idempotent.
+        safe_pw = urllib.parse.quote(urllib.parse.unquote(parsed.password), safe="")
+        safe_user = urllib.parse.quote(urllib.parse.unquote(parsed.username or ""), safe="")
         userinfo = f"{safe_user}:{safe_pw}"
         host_part = parsed.hostname or ""
         if parsed.port:
@@ -51,6 +53,95 @@ def _normalize_db_url_password(db_url: str) -> str:
         # unchanged so the caller can attempt the connection and surface a
         # more specific error.
         return db_url
+
+
+_INSECURE_DEFAULT_KEY = "dev-key-change-in-production"
+
+_REQUIRED_RAILWAY_VARS_DOC = (
+    "Required Railway service variables:\n"
+    "  DATABASE_URL  — linked from the Railway PostgreSQL addon (not manually typed)\n"
+    "  SECRET_KEY    — random hex string: "
+    "python -c \"import secrets; print(secrets.token_hex(32))\"\n"
+    "  GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET — Google OAuth credentials\n"
+    "  (or DEV_AUTO_LOGIN_EMAIL for development-only auto-login instead of OAuth)"
+)
+
+
+def _validate_railway_env(db_url: str) -> None:
+    """Validate required environment variables before the app starts on Railway.
+
+    Railway automatically sets ``RAILWAY_ENVIRONMENT``.  When present this
+    function checks that every variable required for a working production
+    deployment is set to a valid value, and raises ``RuntimeError`` with a
+    clear, actionable message listing every problem at once rather than
+    failing one-at-a-time at the first bad value encountered.
+
+    Variables checked:
+
+    * ``DATABASE_URL`` — must contain a host, password, and database name.
+      A missing password is the most common cause of ``password authentication
+      failed`` errors; it usually means the PostgreSQL addon reference was not
+      linked to the service.
+    * ``SECRET_KEY`` — must not be the insecure development default.  Flask
+      uses this to sign session cookies; leaving it at the default means
+      sessions are predictable and every redeploy logs all users out.
+    * Authentication — either ``GOOGLE_CLIENT_ID``/``GOOGLE_CLIENT_SECRET``
+      (for OAuth) or ``DEV_AUTO_LOGIN_EMAIL`` (development bypass) must be
+      set, otherwise no one can log in.
+    """
+    if not os.environ.get("RAILWAY_ENVIRONMENT"):
+        return
+
+    errors: list[str] = []
+
+    # --- DATABASE_URL component check ---
+    if db_url.startswith("postgresql"):
+        try:
+            parsed = urllib.parse.urlparse(db_url)
+            missing_parts = []
+            if not parsed.hostname:
+                missing_parts.append("host")
+            if not parsed.password:
+                missing_parts.append("password")
+            if not parsed.path or parsed.path == "/":
+                missing_parts.append("database name")
+            if missing_parts:
+                errors.append(
+                    f"DATABASE_URL is incomplete — missing: {', '.join(missing_parts)}. "
+                    "Ensure the Railway PostgreSQL addon is added and its DATABASE_URL "
+                    "reference variable is linked to this service (not manually typed)."
+                )
+        except Exception:
+            # A completely unparseable URL will fail later with a clearer SQLAlchemy error.
+            pass
+
+    # --- SECRET_KEY check ---
+    if os.environ.get("SECRET_KEY", _INSECURE_DEFAULT_KEY) == _INSECURE_DEFAULT_KEY:
+        errors.append(
+            "SECRET_KEY is not set (or uses the insecure development default). "
+            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\" "
+            "and add it as a Railway service variable."
+        )
+
+    # --- Authentication method check ---
+    has_oauth = bool(
+        os.environ.get("GOOGLE_CLIENT_ID") and os.environ.get("GOOGLE_CLIENT_SECRET")
+    )
+    has_dev_login = bool(os.environ.get("DEV_AUTO_LOGIN_EMAIL"))
+    if not has_oauth and not has_dev_login:
+        errors.append(
+            "No login method is configured. "
+            "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET for Google OAuth, "
+            "or set DEV_AUTO_LOGIN_EMAIL for development auto-login."
+        )
+
+    if errors:
+        bullet_list = "\n  • ".join(errors)
+        raise RuntimeError(
+            f"Railway startup validation failed — fix the following issues before redeploying:\n"
+            f"  • {bullet_list}\n\n"
+            f"{_REQUIRED_RAILWAY_VARS_DOC}"
+        )
 
 
 def create_app(test_config=None):
@@ -72,7 +163,7 @@ def create_app(test_config=None):
         db_url = f"sqlite:///{db_path}"
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-change-in-production")
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", _INSECURE_DEFAULT_KEY)
     app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET")
     app.config["DEV_AUTO_LOGIN_EMAIL"] = os.environ.get("DEV_AUTO_LOGIN_EMAIL")
@@ -80,6 +171,10 @@ def create_app(test_config=None):
 
     if test_config:
         app.config.update(test_config)
+
+    # Fail fast on Railway if required environment variables are missing or insecure.
+    # Called before db.init_app() so the error is clear even if the URL is malformed.
+    _validate_railway_env(db_url)
 
     # Trust Railway's HTTPS proxy so url_for(..., _external=True) produces https://
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -215,9 +310,17 @@ def _validate_railway_db() -> None:
         db.session.execute(text("SELECT 1"))
         logger.info("Railway PostgreSQL connection probe: OK")
     except Exception as exc:
+        exc_str = str(exc)
+        hint = (
+            "The password in DATABASE_URL does not match the PostgreSQL service. "
+            "This usually means the addon was re-provisioned after DATABASE_URL was set. "
+            "Fix: open the Railway PostgreSQL addon → Variables tab, copy the current "
+            "DATABASE_URL value, and update the reference on this service."
+            if "password authentication failed" in exc_str
+            else "Verify that DATABASE_URL is correct and the PostgreSQL service is running."
+        )
         raise RuntimeError(
-            f"Railway PostgreSQL connection failed at startup: {exc}\n"
-            "Verify that DATABASE_URL is correct and the PostgreSQL service is running."
+            f"Railway PostgreSQL connection failed at startup: {exc}\n{hint}"
         ) from exc
 
 
