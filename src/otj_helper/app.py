@@ -165,7 +165,7 @@ def _validate_railway_db() -> None:
     if not os.environ.get("RAILWAY_ENVIRONMENT"):
         return
 
-    if db.engine.dialect.name == "sqlite":
+    if db.engine.dialect.name != "postgresql":
         raise RuntimeError(
             "RAILWAY_ENVIRONMENT is set but no PostgreSQL database is configured — "
             "the app would start against a SQLite file on an ephemeral filesystem, "
