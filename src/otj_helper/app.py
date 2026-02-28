@@ -112,8 +112,7 @@ def _validate_railway_env(db_url: str) -> None:
                     "reference variable is linked to this service (not manually typed)."
                 )
         except Exception:
-            # A completely unparseable URL will fail later with a clearer SQLAlchemy error.
-            pass
+            logger.debug("Unparseable DATABASE_URL: %s", db_url, exc_info=True)
 
     # --- SECRET_KEY check ---
     if os.environ.get("SECRET_KEY", _INSECURE_DEFAULT_KEY) == _INSECURE_DEFAULT_KEY:
@@ -142,6 +141,7 @@ def _validate_railway_env(db_url: str) -> None:
             f"  • {bullet_list}\n\n"
             f"{_REQUIRED_RAILWAY_VARS_DOC}"
         )
+
 
 
 def create_app(test_config=None):

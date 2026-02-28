@@ -16,12 +16,35 @@ def test_normalize_plain_url_unchanged():
     assert _normalize_db_url_password(url) == url
 
 
-def test_normalize_encodes_at_sign_in_password():
-    """An un-encoded @ in the password is re-encoded as %40."""
+def test_normalize_preserves_encoded_at_in_password():
+    """An already-encoded %40 in the password is not double-encoded to %2540.
+
+    Python 3.11's urlparse.password returns the raw (still-encoded) string, so
+    we must unquote before re-quoting to avoid the %40 → %2540 double-encoding
+    bug.
+    """
     url = "postgresql://user:p%40ss@host:5432/db"
     result = _normalize_db_url_password(url)
     assert "%40" in result
+    assert "%2540" not in result
     assert result.count("@") == 1  # only the userinfo/host separator remains
+
+
+def test_normalize_encodes_raw_at_sign_in_password():
+    """A raw @ in the password (placed there by urlparse's last-@ splitting rule)
+    is encoded to %40 in the normalised URL.
+
+    Note: urllib.parse.urlparse uses the *last* @ in the netloc to split
+    userinfo from the host, so a literal @ inside the password is correctly
+    extracted as part of the password string.  After normalisation it must
+    appear as %40 so SQLAlchemy and psycopg2 do not misread the host portion.
+    """
+    # urlparse splits on the LAST @, so parsed.password == "p@ss"
+    url = "postgresql://user:p@ss@host:5432/db"
+    result = _normalize_db_url_password(url)
+    assert result is not None
+    assert "%40" in result
+    assert result.count("@") == 1  # separator only; literal @ is encoded
 
 
 def test_normalize_encodes_hash_in_password():
@@ -156,6 +179,16 @@ def test_validate_db_url_missing_host(monkeypatch):
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
     with pytest.raises(RuntimeError, match="host"):
         _validate_railway_env("postgresql://user:pass@/db")
+
+
+def test_validate_db_url_missing_database_name(monkeypatch):
+    """A DATABASE_URL with path '/' (no database name) raises RuntimeError."""
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT", "production")
+    monkeypatch.setenv("SECRET_KEY", "a" * 64)
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    with pytest.raises(RuntimeError, match="database name"):
+        _validate_railway_env("postgresql://user:pass@host:5432/")
 
 
 def test_validate_multiple_errors_reported_together(monkeypatch):
