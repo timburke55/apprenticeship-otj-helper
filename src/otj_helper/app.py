@@ -165,8 +165,7 @@ def _validate_railway_db() -> None:
     if not os.environ.get("RAILWAY_ENVIRONMENT"):
         return
 
-    db_uri = db.engine.url.render_as_string(hide_password=True)
-    if "sqlite" in db_uri:
+    if db.engine.dialect.name == "sqlite":
         raise RuntimeError(
             "RAILWAY_ENVIRONMENT is set but no PostgreSQL database is configured — "
             "the app would start against a SQLite file on an ephemeral filesystem, "
@@ -175,6 +174,7 @@ def _validate_railway_db() -> None:
             "DATABASE_URL variable to this service, then redeploy."
         )
 
+    db_uri = db.engine.url.render_as_string(hide_password=True)
     logger.info("Railway environment detected (db=%s) — probing PostgreSQL connection...", db_uri)
     try:
         db.session.execute(text("SELECT 1"))
