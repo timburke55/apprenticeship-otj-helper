@@ -10,6 +10,7 @@ from flask import Flask, g, session
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.pool import NullPool
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from otj_helper.ksb_data import KSBS
@@ -191,11 +192,15 @@ def create_app(test_config=None):
         db_url = f"sqlite:///{db_path}"
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
-    # Validate connections before handing them out from the pool.  This
-    # prevents stale-connection errors when PostgreSQL restarts or when a
-    # gunicorn worker inherits a connection forked from the master process.
+    # Use NullPool for PostgreSQL so the master process (gunicorn --preload)
+    # never accumulates pooled connections that workers would inherit after
+    # os.fork().  Forking with live pooled connections causes the same
+    # file descriptor to be used from multiple processes simultaneously,
+    # which produces unpredictable errors.  With NullPool each checkout
+    # creates a fresh connection and each checkin closes it immediately;
+    # there is nothing to inherit or dispose of post-fork.
     if db_url.startswith("postgresql"):
-        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"poolclass": NullPool}
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", _INSECURE_DEFAULT_KEY)
     app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID")
     app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET")
