@@ -65,6 +65,7 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">KSBs</th>
                 <th class="hidden md:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tags</th>
                 <th class="hidden md:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Links</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase whitespace-nowrap">Provider</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -101,6 +102,13 @@
                 <td class="hidden md:table-cell px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                     {% if activity.resources %}
                     <span class="text-xs">{{ activity.resources|length }} link{{ 's' if activity.resources|length > 1 }}</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3 text-sm whitespace-nowrap">
+                    {% if activity.logged_with_provider %}
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" title="Logged with provider">&#10003; Logged</span>
+                    {% else %}
+                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400" title="Not yet logged with provider">Pending</span>
                     {% endif %}
                 </td>
             </tr>

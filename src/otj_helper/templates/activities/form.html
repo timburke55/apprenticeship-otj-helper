@@ -96,6 +96,18 @@ function applyTemplate() {
             </div>
 
             <div class="sm:col-span-2 border-t border-gray-100 dark:border-gray-700 pt-4">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="logged_with_provider" id="logged_with_provider" value="1"
+                        {% if activity and activity.logged_with_provider %}checked{% endif %}
+                        class="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-700">
+                    <span>
+                        <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Logged with provider</span>
+                        <span class="block text-xs text-gray-500 dark:text-gray-400">Tick when you have submitted this activity to your training provider so it counts towards your assessment.</span>
+                    </span>
+                </label>
+            </div>
+
+            <div class="sm:col-span-2 border-t border-gray-100 dark:border-gray-700 pt-4">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attachments</label>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Upload files as evidence — images, PDFs, or documents. Max 10 MB each.</p>
                 {% if activity and activity.id and activity.attachments %}

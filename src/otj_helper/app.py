@@ -367,6 +367,7 @@ def _migrate_db() -> list[bool]:
         "ALTER TABLE app_user ADD COLUMN seminar_target_hours REAL",
         "ALTER TABLE app_user ADD COLUMN weekly_target_hours REAL",
         "ALTER TABLE activity ADD COLUMN evidence_quality VARCHAR(20) NOT NULL DEFAULT 'draft'",
+        "ALTER TABLE activity ADD COLUMN logged_with_provider BOOLEAN NOT NULL DEFAULT 0",
         (
             "CREATE TABLE IF NOT EXISTS activity_template ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
