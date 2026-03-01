@@ -153,6 +153,12 @@ Use quality to track how polished your evidence is:
 
 The Recommendations page tracks how many KSBs have only Draft evidence and prompts you to improve them.
 
+### Logged with Provider
+
+Each activity has a **Logged with provider** checkbox. Tick it once you have submitted the activity to your training provider so that it counts towards your assessment. Activities not yet logged show a **Pending** badge in the activity list; logged activities show a green **Logged** badge.
+
+This is for your own tracking only — ticking the box does not send anything to your provider automatically.
+
 ### Editing and Deleting
 
 Open an activity and click **Edit** or **Delete**. Deleting an activity also removes all its resource links, attachments, and tag associations permanently.

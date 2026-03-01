@@ -93,6 +93,7 @@ class Activity(db.Model):
     ]
 
     evidence_quality = db.Column(db.String(20), nullable=True, default="draft")
+    logged_with_provider = db.Column(db.Boolean, nullable=False, default=False)
 
 
 # Many-to-many association table for tags

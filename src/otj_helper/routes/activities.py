@@ -118,7 +118,7 @@ def export_csv():
     writer = csv.writer(output)
     writer.writerow([
         "date", "title", "hours", "type", "evidence_quality",
-        "tags", "ksbs", "links", "description", "notes",
+        "logged_with_provider", "tags", "ksbs", "links", "description", "notes",
     ])
     type_labels = dict(Activity.ACTIVITY_TYPES)
     quality_labels = dict(Activity.EVIDENCE_QUALITY_OPTIONS)
@@ -129,6 +129,7 @@ def export_csv():
             round(a.duration_hours, 1),
             type_labels.get(a.activity_type, a.activity_type),
             quality_labels.get(a.evidence_quality or "draft", a.evidence_quality or "draft"),
+            "yes" if a.logged_with_provider else "no",
             "; ".join(t.name for t in a.tags),
             "; ".join(k.natural_code for k in a.ksbs),
             "; ".join(r.url for r in a.resources),
@@ -310,6 +311,7 @@ def _save_activity(activity):
     activity.notes = request.form.get("notes", "")
     activity.activity_type = activity_type or ""
     activity.evidence_quality = evidence_quality
+    activity.logged_with_provider = request.form.get("logged_with_provider") == "1"
     activity.activity_date = activity_date   # may be None if parse failed; template handles it
     activity.duration_hours = duration       # may be None if parse failed; template handles it
 
